@@ -201,6 +201,11 @@ sudo ufw allow 5432/tcp
 sudo systemctl restart postgresql
 ```
 
+É importante verificar o status do database e checar se há erros. Para isso executamos os comandos:
+
+
+![](docs/roteiro1/imagens/file_2025-03-12_20.23.30.png)
+
 *BREAKPOINT*
 
 ### Tarefa 2
