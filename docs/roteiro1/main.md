@@ -131,9 +131,13 @@ Com a infra pronta agora vamos fazer deploy de uma aplicação Django. Mas antes
 
 ### Primeira Parte: Banco de Dados
 
-Primeiro vamos acessar o dashboard do MaaS na aba Machines e fazer deploy do ubuntu 24.04 no server1:
+Primeiro vamos acessar o dashboard do MaaS na aba Machines e fazer deploy do ubuntu 24.04 no server1. Acessando o dashboard do server1 e em "Take Action" selecionar a versão do Ubuntu 24 e habilitar o script para inserir a chave ssh que foi obtida anteriormente e pode ser recuperada com o comando: 
 
-*INSERIR IMAGEM AQUI*
+```
+cat ./.ssh/id_rsa.pub
+```
+
+![](docs/roteiro1/imagens/imagem_2025-03-14_203900663.png)
 
 Em seguida acessamos o server1 pelo terminal via SSH. Primeiro acessamos a main:
 
@@ -177,6 +181,24 @@ nano /etc/postgresql/16/main/postgresql.conf
 ```
 ```
 listen_addresses = '*'
+```
+
+Depois vamos liberar para qualquer máquina dentro da subnet do kit:
+
+```
+nano /etc/postgresql/<versão>/main/pg_hba.conf
+```
+Alterando a linha:
+
+```
+  host    all             all             172.16.0.0/20          trust
+```
+
+Em seguida, vamos sair do usuário postgres, liberar o firewall e reiniciar o serviço:
+
+```
+sudo ufw allow 5432/tcp
+sudo systemctl restart postgresql
 ```
 
 *BREAKPOINT*
