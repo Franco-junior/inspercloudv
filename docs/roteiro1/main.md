@@ -160,8 +160,9 @@ Ainda dentro do server1 precisamos criar um usuário:
 
 ```
 sudo su - postgres
-createuser -s cloud -W #Utilizra a senha cloud
+createuser -s cloud -W
 ```
+> Utilizar a senha cloud
 
 Agora vamos criar o database:
 
@@ -169,12 +170,14 @@ Agora vamos criar o database:
 createdb -O cloud tasks
 ```
 
-Agora expor o serviço para acesso:
+Agora expor o serviço para acesso e remover o comentário e substituir a string da linha para aceitar conexões remotas:
 
 ```
-nano /etc/postgresql/14/main/postgresql.conf
+nano /etc/postgresql/16/main/postgresql.conf
 ```
-
+```
+listen_addresses = '*'
+```
 
 *BREAKPOINT*
 
