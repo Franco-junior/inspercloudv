@@ -137,7 +137,7 @@ Primeiro vamos acessar o dashboard do MaaS na aba Machines e fazer deploy do ubu
 cat ./.ssh/id_rsa.pub
 ```
 
-![](docs/roteiro1/imagens/imagem_2025-03-14_203900663.png)
+![](imagens/imagem_2025-03-14_203900663.png)
 
 Em seguida acessamos o server1 pelo terminal via SSH. Primeiro acessamos a main:
 
@@ -214,7 +214,7 @@ sudo ss -tulnp | grep postgres
 ```
 
 
-![](docs/roteiro1/imagens/foto.png)
+![](imagens/foto.png)
 
 
 ### Tarefa 2
