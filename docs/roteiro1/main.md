@@ -203,10 +203,19 @@ sudo systemctl restart postgresql
 
 É importante verificar o status do database e checar se há erros. Para isso executamos os comandos:
 
+```
+sudo systemctl status postgresql
 
-![](docs/roteiro1/imagens/file_2025-03-12_20.23.30.png)
+telnet localhost 5432
 
-*BREAKPOINT*
+telnet 172.16.0.196 5432
+
+sudo ss -tulnp | grep postgres
+```
+
+
+![](docs/roteiro1/imagens/foto.png)
+
 
 ### Tarefa 2
 
