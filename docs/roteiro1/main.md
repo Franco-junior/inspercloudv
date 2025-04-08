@@ -313,6 +313,18 @@ ansible-playbook tasks-install-playbook.yaml --extra-vars server=[IP server3]
 
 Mais uma vez é importante verificar os status das aplicações e do dashboard do MAAS:
 
+- Máquinas
+
+![](imagens/foto16.jpeg)
+
+- Aplicação django rodando no server2
+
+![](imagens/foto17.jpeg)
+
+- Aplicação django rodando no server3
+
+![](imagens/foto18.jpeg)
+
 
 
 ## App
