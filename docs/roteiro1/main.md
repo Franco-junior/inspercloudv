@@ -253,12 +253,15 @@ Executamos o comando:
 
 Com isso todo o ambiente do server2 está pronto e com a aplicação django instalada.
 
-![](imagens/foto2.jpeg)
-
 Podemos acessar a aplicação django utilizando um túnel SSH e com esse serviço temporário podemos usar a aplicação fora do kit enquanto o terminal que o tunnel estiver utilizando esteja ativo. Para isso, saímos da main e entramos novamente com o seguinte comando utilizando tunnel:
 
 ```
+ssh cloud@10.103.0.1 -L 8001:[172.16.8.120]:8080
 ```
+
+O comando acima irá criar um tunel do serviço do server2 na porta 8080 para o seu localhost na porta 8001 usando a conexão SSH. Agora basta acessar o navegador pelo endereço http://localhost:8001/admin/ e ver a aplicação funcionando:
+
+![](imagens/foto2.jpeg)
 
 ## App
 
