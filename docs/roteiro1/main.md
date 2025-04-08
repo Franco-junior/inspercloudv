@@ -291,6 +291,9 @@ Agora é importante temos uma visão macro de como estão as máquinas até agor
 
 - Server5
 
+![](imagens/foto13.png)
+![](imagens/foto14.png)
+
 ## App
 
 
