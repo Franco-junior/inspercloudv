@@ -259,9 +259,28 @@ Podemos acessar a aplicação django utilizando um túnel SSH e com esse serviç
 ssh cloud@10.103.0.1 -L 8001:[172.16.8.120]:8080
 ```
 
-O comando acima irá criar um tunel do serviço do server2 na porta 8080 para o seu localhost na porta 8001 usando a conexão SSH. Agora basta acessar o navegador pelo endereço http://localhost:8001/admin/ e ver a aplicação funcionando:
+O comando acima irá criar um tunel do serviço do server2 na porta 8080 para o seu localhost na porta 8001 usando a conexão SSH. Agora basta acessar o navegador pelo endereço http://localhost:8001/admin/ usando login e senha "cloud" e ver a aplicação funcionando:
 
 ![](imagens/foto2.jpeg)
+
+Agora é importante temos uma visão macro de como estão as máquinas até agora, principalmente seus testes de hardware e comissioning e verificar se está tudo OK antes de prosseguir com a próxima tarefa:
+
+- Todas as máquinas
+
+![](imagens/foto3.jpeg)
+
+- Server1
+
+![](imagens/foto4.jpeg)
+![](imagens/foto5.jpeg)
+
+- Server2
+
+- Server3
+
+- Server4
+
+- Server5
 
 ## App
 
