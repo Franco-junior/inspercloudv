@@ -298,6 +298,11 @@ Agora é importante temos uma visão macro de como estão as máquinas até agor
 ![](imagens/foto13.png)
 ![](imagens/foto14.png)
 
+### Tarefa 3
+
+Fizemos uma aplicação django no server 2, mas agora teremos 2 aplicações junto com o server3 compartilhando o mesmo banco de dados do server1. Isso é essencial porque se um node cair o outro está no ar, para que nosso cliente acesse. Além disso, é possível balancear os acessos entre as duas aplicações. Para essa nova instalação será feito de forma automática através do gerenciador de deplou Ansible.
+Seu principal diferencial é ser idempotente, ou seja, conseguir repetir todos os procedimentos sem afetar os estados intermediários da instação. E para dar seguimento faremos deploy do server3 no dashboard do MAAS
+
 ## App
 
 
