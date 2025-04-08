@@ -281,7 +281,13 @@ Agora é importante temos uma visão macro de como estão as máquinas até agor
 
 - Server3
 
+![](imagens/foto8.png)
+![](imagens/foto10.png)
+
 - Server4
+
+![](imagens/foto11.png)
+![](imagens/foto12.png)
 
 - Server5
 
