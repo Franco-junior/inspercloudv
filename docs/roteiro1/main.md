@@ -269,6 +269,10 @@ Agora é importante temos uma visão macro de como estão as máquinas até agor
 
 ![](imagens/foto3.jpeg)
 
+- Imagens sincronizadas
+
+![](imagens/foto15.jpeg)
+
 - Server1
 
 ![](imagens/foto4.jpeg)
