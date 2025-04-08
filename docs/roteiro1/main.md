@@ -301,7 +301,19 @@ Agora é importante temos uma visão macro de como estão as máquinas até agor
 ### Tarefa 3
 
 Fizemos uma aplicação django no server 2, mas agora teremos 2 aplicações junto com o server3 compartilhando o mesmo banco de dados do server1. Isso é essencial porque se um node cair o outro está no ar, para que nosso cliente acesse. Além disso, é possível balancear os acessos entre as duas aplicações. Para essa nova instalação será feito de forma automática através do gerenciador de deplou Ansible.
-Seu principal diferencial é ser idempotente, ou seja, conseguir repetir todos os procedimentos sem afetar os estados intermediários da instação. E para dar seguimento faremos deploy do server3 no dashboard do MAAS
+
+Seu principal diferencial é ser idempotente, ou seja, conseguir repetir todos os procedimentos sem afetar os estados intermediários da instação. E para dar seguimento faremos deploy do server3 no dashboard do MAAS e acessar o SSH da main e executar os comandos:
+
+```
+sudo apt install ansible
+wget https://raw.githubusercontent.com/raulikeda/tasks/master/tasks-install-playbook.yaml
+ansible-playbook tasks-install-playbook.yaml --extra-vars server=[IP server3]
+```
+> Onde tem IP server3 retire os colchetes e coloque o IP
+
+Mais uma vez é importante verificar os status das aplicações e do dashboard do MAAS:
+
+
 
 ## App
 
