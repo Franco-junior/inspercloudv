@@ -219,6 +219,47 @@ sudo ss -tulnp | grep postgres
 
 ### Tarefa 2
 
+Agora vamos retornar ao dashboard do MAAS para fazer o deploy do server2. Acessando o dashboard do server2 e em "Take Action" selecionar a versão do Ubuntu 24 e habilitar o script para inserir a chave ssh que foi obtida anteriormente e pode ser recuperada com o comando: 
+
+```
+cat ./.ssh/id_rsa.pub
+```
+
+Em seguida, acessar o SSH do server2 e clonar o seguinte repositório:
+
+```
+git clone https://github.com/raulikeda/tasks.git
+```
+
+Esse repositório tasks tem algumas atividades pré-configuradas que iremos utilizar para preparar todo o nosso ambiente do server2. Esse repositório:
+
+- Atualiza o sistema (apt update e apt upgrade).
+
+- Instala pacotes essenciais como Git, curl, snapd, etc.
+
+- Instala ferramentas como Django, Python, Postgres.
+
+Agora entrando no diretório e entrando na pasta tasks:
+
+```
+cd tasks
+```
+
+Executamos o comando:
+
+```
+./install.sh
+```
+
+Com isso todo o ambiente do server2 está pronto e com a aplicação django instalada.
+
+![](imagens/foto2.jpeg)
+
+Podemos acessar a aplicação django utilizando um túnel SSH e com esse serviço temporário podemos usar a aplicação fora do kit enquanto o terminal que o tunnel estiver utilizando esteja ativo. Para isso, saímos da main e entramos novamente com o seguinte comando utilizando tunnel:
+
+```
+```
+
 ## App
 
 
