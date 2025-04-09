@@ -377,6 +377,38 @@ Salve o arquivo e feche com Ctrl+O e Ctrl+X e em seguida reiniciar o nginx:
 sudo service nginx restart
 ```
 
+Para verificar se tudo está corretamente configurado vamos acessar cada máquina e entrar na pasta tasks e no arquivo views.py e alterar a mensagem "Hello World" para identificar cada server:
+
+```
+from django.shortcuts import render
+
+from django.http import HttpResponse
+
+def index(request):
+
+  return HttpResponse("Agora estou no server2 da Cloud-V")
+```
+
+Agora vamos realizar um request GET para testar se tudo funciona. Para isso vamos fazer um túnel com a seguinte estrutura:
+
+```
+ssh cloud@(IPMAIN) -L 8081:(IPSERVER):80
+```
+
+No nosso caso para cada server:
+
+```
+ssh cloud@10.103.1.31 -L 8081:172.16.0.196:80
+```
+
+```
+ssh cloud@10.103.1.31 -L 8081:172.16.8.120:80
+```
+
+Com isso, basta acessar o navegador pelo link http://localhost:8081/tasks/ e se a mensagem identificadora de cada server aparecer está tudo ok:
+
+
+
 ## App
 
 
