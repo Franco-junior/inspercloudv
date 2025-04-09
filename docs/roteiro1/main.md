@@ -331,6 +331,52 @@ Instalar manualmente o Django envolve baixar e configurar cada componente, como 
 
 Para essa última tarefa utilizaremos uma aplicação de proxy reverso como load balancer. O balanceamento de carga é uma técnica eficaz para distribuir o tráfego de entrada entre vários servidores, garantindo que nenhum deles fique sobrecarregado. Ao dividir o processamento entre várias máquinas, você cria uma rede mais resiliente e estável, capaz de lidar com falhas e manter a aplicação funcionando sem interrupções. O algoritmo Round Robin é uma abordagem simples e eficaz para alcançar isso, direcionando os visitantes para diferentes endereços IP de forma rotativa.
 
+Para prosseguir com a configuração do loadbalancing do nginx temos que instalar o Nginx com o comando:
+
+```
+sudo apt-get install nginx
+```
+
+Para configurar um loadbalancer round robin, precisaremos usar o módulo upstream do nginx. Incorporaremos a configuração nas definições do nginx. Para isso acessamos através do comando:
+
+```
+sudo nano /etc/nginx/sites-available/default
+```
+
+Dentro do arquivo vamos alterar a seção com o nome "upstream backend" com a seguinte estrutura:
+
+```
+upstream backend {
+   server backend1;
+   server backend2;
+   server backend3;
+}
+```
+
+No nosso caso, colocamos os IPs de cada máquina:
+
+```
+upstream backend {
+   server 172.16.0.196;
+   server 172.16.8.120;
+   server 172.16.8.124;
+}
+```
+
+Ainda dentro do documento iremos alterar um módulo com o nome de "server" com a seguinte configuração:
+
+```
+server {
+   location / { proxy_pass http://backend;}
+}
+```
+
+Salve o arquivo e feche com Ctrl+O e Ctrl+X e em seguida reiniciar o nginx:
+
+```
+sudo service nginx restart
+```
+
 ## App
 
 
