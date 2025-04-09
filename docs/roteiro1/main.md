@@ -217,7 +217,7 @@ sudo ss -tulnp | grep postgres
 ![](imagens/foto.png)
 
 
-### Tarefa 2
+### Parte 2: Deploy manual do django
 
 Agora vamos retornar ao dashboard do MAAS para fazer o deploy do server2. Acessando o dashboard do server2 e em "Take Action" selecionar a versão do Ubuntu 24 e habilitar o script para inserir a chave ssh que foi obtida anteriormente e pode ser recuperada com o comando: 
 
@@ -298,7 +298,7 @@ Agora é importante temos uma visão macro de como estão as máquinas até agor
 ![](imagens/foto13.png)
 ![](imagens/foto14.png)
 
-### Tarefa 3
+### Parte 3: Automatização de deploy
 
 Fizemos uma aplicação django no server 2, mas agora teremos 2 aplicações junto com o server3 compartilhando o mesmo banco de dados do server1. Isso é essencial porque se um node cair o outro está no ar, para que nosso cliente acesse. Além disso, é possível balancear os acessos entre as duas aplicações. Para essa nova instalação será feito de forma automática através do gerenciador de deplou Ansible.
 
@@ -325,7 +325,11 @@ Mais uma vez é importante verificar os status das aplicações e do dashboard d
 
 ![](imagens/foto18.jpeg)
 
+Instalar manualmente o Django envolve baixar e configurar cada componente, como Python, pip, virtualenv e as dependências específicas do projeto, além de configurar o ambiente de desenvolvimento, o que pode ser trabalhoso e propenso a erros. Por outro lado, usar o Ansible para instalar o Django permite automatizar todo o processo, criando playbooks que definem as configurações necessárias, como instalar pacotes, configurar o ambiente virtual, clonar o repositório do projeto e ajustar as configurações do Django, tornando o processo mais rápido, além de facilitar a replicação em diferentes ambientes.
 
+### Parte 4: Balanceamento de carga
+
+Para essa última tarefa utilizaremos uma aplicação de proxy reverso como load balancer. O balanceamento de carga é uma técnica eficaz para distribuir o tráfego de entrada entre vários servidores, garantindo que nenhum deles fique sobrecarregado. Ao dividir o processamento entre várias máquinas, você cria uma rede mais resiliente e estável, capaz de lidar com falhas e manter a aplicação funcionando sem interrupções. O algoritmo Round Robin é uma abordagem simples e eficaz para alcançar isso, direcionando os visitantes para diferentes endereços IP de forma rotativa.
 
 ## App
 
