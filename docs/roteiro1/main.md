@@ -407,38 +407,10 @@ ssh cloud@10.103.1.31 -L 8081:172.16.8.120:80
 
 Com isso, basta acessar o navegador pelo link http://localhost:8081/tasks/ e se a mensagem identificadora de cada server aparecer está tudo ok:
 
+- Server2
 
+![](imagens/foto19.jpeg)
 
-## App
+- Server3
 
-
-
-### Tarefa 1
-
-### Tarefa 2
-
-Exemplo de diagrama
-
-```mermaid
-architecture-beta
-    group api(cloud)[API]
-
-    service db(database)[Database] in api
-    service disk1(disk)[Storage] in api
-    service disk2(disk)[Storage] in api
-    service server(server)[Server] in api
-
-    db:L -- R:server
-    disk1:T -- B:server
-    disk2:T -- B:db
-```
-
-[Mermaid](https://mermaid.js.org/syntax/architecture.html){:target="_blank"}
-
-## Discussões
-
-Quais as dificuldades encontradas? O que foi mais fácil? O que foi mais difícil?
-
-## Conclusão
-
-O que foi possível concluir com a realização do roteiro?
+![](imagens/foto20.jpeg)
