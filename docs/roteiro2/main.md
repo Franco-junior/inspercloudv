@@ -128,16 +128,14 @@ Com os arquivos baixados, fazemos o deploy local dos charms:
 **Deploy do Prometheus:**
 
 ```
-juju deploy ./prometheus2_XXX.charm
+juju deploy ./prometheus2_r69.charm
 ```
 
 **Deploy do Grafana:**
 
 ```
-juju deploy ./grafana_XXX.charm
+juju deploy ./grafana_r69.charm
 ```
-
-> Substitua `XXX` pela versão específica que foi baixada.
 
 ---
 
