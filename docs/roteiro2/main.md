@@ -71,10 +71,10 @@ Para fazer o deploy do dashboard, primeiro mudamos para o modelo do controlador:
 juju switch maas-controller:admin/maas
 ```
 
-Em seguida, fazemos o deploy do dashboard:
+Em seguida, fazemos o deploy do dashboard especificando a máquina que queremos alocar:
 
 ```
-juju deploy juju-dashboard dashboard
+juju deploy juju-dashboard dashboard --to lxd:0
 ```
 
 Então, integramos o controlador ao dashboard:
@@ -89,8 +89,16 @@ Por fim, expomos o painel:
 juju expose dashboard
 ```
 
-Agora já podemos acessar o Juju Dashboard com o comando ```juju dashboard```.
+Todo o processo pode levar alguns minutos e podemos checar como está o progresso com:
 
+```
+juju status
+```
+
+Estando pronto agora já podemos acessar o Juju Dashboard com o comando:
+
+```
+juju dashboard
 ---
 
 ### Deploy do Grafana com Prometheus usando Juju
