@@ -608,56 +608,42 @@
 <div class="language-text highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>juju status
 </span></code></pre></div>
 <p>Estando pronto agora já podemos acessar o Juju Dashboard com o comando:</p>
-<p><div class="language-text highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>juju dashboard
-</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>---
-</span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>
-</span><span id="__span-11-4"><a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>### Deploy do Grafana com Prometheus usando Juju
-</span><span id="__span-11-5"><a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>
-</span><span id="__span-11-6"><a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>O **Grafana** é uma plataforma de código aberto que permite visualizar dados em tempo real por meio de gráficos e painéis. Para funcionar corretamente, ele precisa de um banco de dados que armazene suas configurações e metadados. Neste caso, vamos utilizar o **Prometheus**.
-</span><span id="__span-11-7"><a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>
-</span><span id="__span-11-8"><a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>---
-</span><span id="__span-11-9"><a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>
-</span><span id="__span-11-10"><a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>#### 1. Criar a pasta para armazenar os charms
-</span><span id="__span-11-11"><a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>
-</span><span id="__span-11-12"><a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a>Primeiro, criamos uma pasta chamada `charms` onde vamos baixar os charms do Grafana e do Prometheus:
+<div class="language-text highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>juju dashboard
 </span></code></pre></div>
-mkdir -p /home/cloud/charms
-cd /home/cloud/charms
-<div class="language-text highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>---
-</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>
-</span><span id="__span-12-3"><a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>#### 2. Baixar os charms do Charmhub
-</span><span id="__span-12-4"><a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>
-</span><span id="__span-12-5"><a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>Agora, vamos fazer o download dos charms necessários:
+<hr />
+<h3 id="deploy-do-grafana-com-prometheus-usando-juju">Deploy do Grafana com Prometheus usando Juju</h3>
+<p>O <strong>Grafana</strong> é uma plataforma de código aberto que permite visualizar dados em tempo real por meio de gráficos e painéis. Para funcionar corretamente, ele precisa de um banco de dados que armazene suas configurações e metadados. Neste caso, vamos utilizar o <strong>Prometheus</strong>.</p>
+<hr />
+<h4 id="1-criar-a-pasta-para-armazenar-os-charms">1. Criar a pasta para armazenar os charms</h4>
+<p>Primeiro, criamos uma pasta chamada <code>charms</code> onde vamos baixar os charms do Grafana e do Prometheus:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>mkdir -p /home/cloud/charms
+</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>cd /home/cloud/charms
 </span></code></pre></div>
-juju download grafana
-juju download prometheus2
-<div class="language-text highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>---
-</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>
-</span><span id="__span-13-3"><a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>#### 3. Fazer o deploy dos charms
-</span><span id="__span-13-4"><a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>
-</span><span id="__span-13-5"><a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>Com os arquivos baixados, fazemos o deploy local dos charms:
-</span><span id="__span-13-6"><a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>
-</span><span id="__span-13-7"><a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>**Deploy do Prometheus:**
+<hr />
+<h4 id="2-baixar-os-charms-do-charmhub">2. Baixar os charms do Charmhub</h4>
+<p>Agora, vamos fazer o download dos charms necessários:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>juju download grafana
+</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>juju download prometheus2
 </span></code></pre></div>
-juju deploy ./prometheus2_r69.charm
-<div class="language-text highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>**Deploy do Grafana:**
+<hr />
+<h4 id="3-fazer-o-deploy-dos-charms">3. Fazer o deploy dos charms</h4>
+<p>Com os arquivos baixados, fazemos o deploy local dos charms:</p>
+<p><strong>Deploy do Prometheus:</strong></p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>juju deploy ./prometheus2_r69.charm
 </span></code></pre></div>
-juju deploy ./grafana_r69.charm
-<div class="language-text highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>---
-</span><span id="__span-15-2"><a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>
-</span><span id="__span-15-3"><a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>#### 4. Integrar Grafana com Prometheus
-</span><span id="__span-15-4"><a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>
-</span><span id="__span-15-5"><a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>Com os serviços no ar, integramos o Grafana ao Prometheus:
+<p><strong>Deploy do Grafana:</strong></p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>juju deploy ./grafana_r69.charm
 </span></code></pre></div>
-juju integrate grafana prometheus2
-<div class="language-text highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>---
-</span><span id="__span-16-2"><a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>
-</span><span id="__span-16-3"><a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>#### 5. Acompanhar o status do deploy
-</span><span id="__span-16-4"><a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>
-</span><span id="__span-16-5"><a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>Para acompanhar o andamento dos deploys e da integração em tempo real:
+<hr />
+<h4 id="4-integrar-grafana-com-prometheus">4. Integrar Grafana com Prometheus</h4>
+<p>Com os serviços no ar, integramos o Grafana ao Prometheus:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>juju integrate grafana prometheus2
 </span></code></pre></div>
-watch -n 1 juju status
-```</p>
+<hr />
+<h4 id="5-acompanhar-o-status-do-deploy">5. Acompanhar o status do deploy</h4>
+<p>Para acompanhar o andamento dos deploys e da integração em tempo real:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>watch -n 1 juju status
+</span></code></pre></div>
 <hr />
 <h3 id="tarefas">Tarefas</h3>
 <ol>
