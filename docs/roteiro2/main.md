@@ -99,6 +99,8 @@ Estando pronto agora já podemos acessar o Juju Dashboard com o comando:
 
 ```
 juju dashboard
+```
+
 ---
 
 ### Deploy do Grafana com Prometheus usando Juju
