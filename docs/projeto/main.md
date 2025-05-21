@@ -15,6 +15,29 @@ O projeto segue uma arquitetura em camadas, utilizando:
 
 https://youtu.be/UWX2HL2aMkw
 
+## Docker Hub
+
+A imagem da API está disponível no Docker Hub:
+
+```
+$ docker pull crowdi/insper-cloud-projeto:latest
+```
+
+Link para o Docker Hub: [https://hub.docker.com/r/crowdi/insper-cloud-projeto](https://hub.docker.com/r/crowdi/insper-cloud-projeto)
+
+### Comandos utilizados para publicação no Docker Hub
+
+```bash
+# Fazer login no Docker Hub
+docker login
+
+# Construir a imagem
+docker build -t crowdi/insper-cloud-projeto:latest ./api
+
+# Enviar a imagem para o Docker Hub
+docker push crowdi/insper-cloud-projeto:latest
+```
+
 ### Diagrama de Arquitetura
 
 ```mermaid
@@ -158,29 +181,6 @@ Date,Open,High,Low,Close,Volume
 2024-09-05,136112.0,136656.0,135959.0,136502.0,7528700
 2024-09-06,136508.0,136653.0,134476.0,134572.0,7563300
 // mais dias...
-```
-
-## Docker Hub
-
-A imagem da API está disponível no Docker Hub:
-
-```
-$ docker pull crowdi/insper-cloud-projeto:latest
-```
-
-Link para o Docker Hub: [https://hub.docker.com/r/crowdi/insper-cloud-projeto](https://hub.docker.com/r/crowdi/insper-cloud-projeto)
-
-### Comandos utilizados para publicação no Docker Hub
-
-```bash
-# Fazer login no Docker Hub
-docker login
-
-# Construir a imagem
-docker build -t crowdi/insper-cloud-projeto:latest ./api
-
-# Enviar a imagem para o Docker Hub
-docker push crowdi/insper-cloud-projeto:latest
 ```
 
 ## Arquivo compose.yaml
