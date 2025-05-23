@@ -512,3 +512,16 @@ juju config ceph-osd osd-devices='/dev/sdb'
 Após esse último passo, você pode executar o comando juju status e seu terminal deve parecer algo com isso:
 
 ![](img/final.jpeg)
+
+# Setup
+
+Agora vamos configurar os serviços das VMs, dos discos e da estrutura de rede virtual
+
+Para isso, é preciso seguir alguns passos:
+
+- carregar as variáveis de ambiente e se autenticar no sistema através do openrc;
+- utilizar o dashboard para visualizar as mudanças;
+- importar uma imagem do Ubuntu Jammy;
+- criar os flavors para as VMs;
+- criar uma rede externa para conectar as VMs à rede física;
+- criar uma rede interna e um roteador para conectar as VMs à rede externa.
