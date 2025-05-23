@@ -247,3 +247,242 @@ juju deploy --channel 8.0/stable mysql-router neutron-api-mysql-router
 juju integrate neutron-api-mysql-router:db-router mysql-innodb-cluster:db-router
 juju integrate neutron-api-mysql-router:shared-db neutron-api:shared-db
 ```
+
+### Keystone
+
+O aplicativo **keystone** será **containerizado** na máquina **0** com o charm **keystone**. Para implantar:
+
+```bash
+juju deploy --to lxd:0 --channel yoga/stable keystone
+```
+
+Conecte o **keystone** ao banco de dados da nuvem:
+
+```bash
+juju deploy --channel 8.0/stable mysql-router keystone-mysql-router
+juju integrate keystone-mysql-router:db-router mysql-innodb-cluster:db-router
+juju integrate keystone-mysql-router:shared-db keystone:shared-db
+```
+
+Duas relações adicionais podem ser adicionadas neste momento:
+
+```bash
+juju integrate keystone:identity-service neutron-api:identity-service
+juju integrate keystone:certificates vault:certificates
+```
+
+### RabbitMQ
+
+O aplicativo **rabbitmq-server** será **containerizado** na máquina **2** com o charm **rabbitmq-server**. Para implantar:
+
+```bash
+juju deploy --to lxd:2 --channel 3.9/stable rabbitmq-server
+```
+
+Duas relações podem ser adicionadas neste momento:
+
+```bash
+juju integrate rabbitmq-server:amqp neutron-api:amqp
+juju integrate rabbitmq-server:amqp nova-compute:amqp
+```
+
+### Nova Cloud Controller
+
+O aplicativo **nova-cloud-controller**, que inclui os serviços **nova-scheduler**, **nova-api** e **nova-conductor**, será **containerizado** na máquina **2** com o charm **nova-cloud-controller**. O arquivo **ncc.yaml** contém a configuração:
+
+**ncc.yaml**
+
+```yaml
+nova-cloud-controller:
+  network-manager: Neutron
+```
+
+Para implantar:
+
+```bash
+juju deploy --to lxd:2 --channel yoga/stable --config ncc.yaml nova-cloud-controller
+```
+
+Conecte o **nova-cloud-controller** ao banco de dados da nuvem:
+
+```bash
+juju deploy --channel 8.0/stable mysql-router ncc-mysql-router
+juju integrate ncc-mysql-router:db-router mysql-innodb-cluster:db-router
+juju integrate ncc-mysql-router:shared-db nova-cloud-controller:shared-db
+```
+
+Para manter a saída do `juju status` mais compacta, o nome esperado da aplicação **nova-cloud-controller-mysql-router** foi abreviado para **ncc-mysql-router**.
+
+Cinco relações adicionais podem ser adicionadas neste momento:
+
+```bash
+juju integrate nova-cloud-controller:identity-service keystone:identity-service
+juju integrate nova-cloud-controller:amqp rabbitmq-server:amqp
+juju integrate nova-cloud-controller:neutron-api neutron-api:neutron-api
+juju integrate nova-cloud-controller:cloud-compute nova-compute:cloud-compute
+juju integrate nova-cloud-controller:certificates vault:certificates
+```
+
+### Placement
+
+O aplicativo **placement** será **containerizado** na máquina **2** com o charm **placement**. Para implantar:
+
+```bash
+juju deploy --to lxd:2 --channel yoga/stable placement
+```
+
+Conecte o **placement** ao banco de dados da nuvem:
+
+```bash
+juju deploy --channel 8.0/stable mysql-router placement-mysql-router
+juju integrate placement-mysql-router:db-router mysql-innodb-cluster:db-router
+juju integrate placement-mysql-router:shared-db placement:shared-db
+```
+
+Três relações adicionais podem ser adicionadas neste momento:
+
+```bash
+juju integrate placement:identity-service keystone:identity-service
+juju integrate placement:placement nova-cloud-controller:placement
+juju integrate placement:certificates vault:certificates
+```
+
+### Horizon - OpenStack Dashboard
+
+O aplicativo **openstack-dashboard** (Horizon) será **containerizado** na máquina **2** com o charm **openstack-dashboard**. Para implantar:
+
+```bash
+juju deploy --to lxd:2 --channel yoga/stable openstack-dashboard
+```
+
+Conecte o **openstack-dashboard** ao banco de dados da nuvem:
+
+```bash
+juju deploy --channel 8.0/stable mysql-router dashboard-mysql-router
+juju integrate dashboard-mysql-router:db-router mysql-innodb-cluster:db-router
+juju integrate dashboard-mysql-router:shared-db openstack-dashboard:shared-db
+```
+
+Para manter a saída do `juju status` mais compacta, o nome esperado da aplicação **openstack-dashboard-mysql-router** foi abreviado para **dashboard-mysql-router**.
+
+Duas relações adicionais podem ser adicionadas neste momento:
+
+```bash
+juju integrate openstack-dashboard:identity-service keystone:identity-service
+juju integrate openstack-dashboard:certificates vault:certificates
+```
+
+### Glance 
+
+O aplicativo **glance** será **containerizado** na máquina **2** com o charm **glance**. Para implantar:
+
+```bash
+juju deploy --to lxd:2 --channel yoga/stable glance
+```
+
+Conecte o **glance** ao banco de dados da nuvem:
+
+```bash
+juju deploy --channel 8.0/stable mysql-router glance-mysql-router
+juju integrate glance-mysql-router:db-router mysql-innodb-cluster:db-router
+juju integrate glance-mysql-router:shared-db glance:shared-db
+```
+
+Quatro relações adicionais podem ser adicionadas neste momento:
+
+```bash
+juju integrate glance:image-service nova-cloud-controller:image-service
+juju integrate glance:image-service nova-compute:image-service
+juju integrate glance:identity-service keystone:identity-service
+juju integrate glance:certificates vault:certificates
+```
+
+### Ceph Monitor
+
+O aplicativo **ceph-mon** será **containerizado** nas máquinas **0, 1 e 2** com o charm **ceph-mon**. O arquivo **ceph-mon.yaml** contém a configuração:
+
+**ceph-mon.yaml**
+
+```yaml
+ceph-mon:
+  expected-osd-count: 3
+  monitor-count: 3
+```
+
+A configuração acima informa ao cluster MON que ele é composto por **três nós** e que deve esperar **pelo menos três OSDs (discos)**.
+
+Para implantar:
+
+```bash
+juju deploy -n 3 --to lxd:0,lxd:1,lxd:2 --channel quincy/stable --config ceph-mon.yaml ceph-mon
+```
+
+Três relações podem ser adicionadas neste momento:
+
+```bash
+juju integrate ceph-mon:osd ceph-osd:mon
+juju integrate ceph-mon:client nova-compute:ceph
+juju integrate ceph-mon:client glance:ceph
+```
+
+Sobre as relações acima:
+
+* A relação **nova-compute\:ceph** faz com que o **Ceph** seja o **backend de armazenamento** para as imagens de disco **não bootáveis** do Nova. Para que isso tenha efeito, a opção do charm **nova-compute**, chamada `libvirt-image-backend`, deve estar definida como `'rbd'`.
+
+* A relação **glance\:ceph** faz com que o **Ceph** seja o **backend de armazenamento** para o **Glance**.
+
+### Cinder
+
+O aplicativo **cinder** será **containerizado** na máquina **1** com o charm **cinder**. O arquivo **cinder.yaml** contém a seguinte configuração:
+
+**cinder.yaml**
+
+```yaml
+cinder:
+  block-device: None
+  glance-api-version: 2
+```
+
+A opção `block-device` está definida como `'None'` para indicar que o charm **não deve gerenciar dispositivos de bloco**. A opção `glance-api-version` está definida como `'2'` para indicar que deve ser usada a versão 2 da API do Glance.
+
+Para implantar:
+
+```bash
+juju deploy --to lxd:1 --channel yoga/stable --config cinder.yaml cinder
+```
+
+Conecte o **cinder** ao banco de dados da nuvem:
+
+```bash
+juju deploy --channel 8.0/stable mysql-router cinder-mysql-router
+juju integrate cinder-mysql-router:db-router mysql-innodb-cluster:db-router
+juju integrate cinder-mysql-router:shared-db cinder:shared-db
+```
+
+Cinco relações adicionais podem ser adicionadas neste momento:
+
+```bash
+juju integrate cinder:cinder-volume-service nova-cloud-controller:cinder-volume-service
+juju integrate cinder:identity-service keystone:identity-service
+juju integrate cinder:amqp rabbitmq-server:amqp
+juju integrate cinder:image-service glance:image-service
+juju integrate cinder:certificates vault:certificates
+```
+
+A relação acima com **glance\:image-service** permitirá que o **Cinder consuma a API do Glance** (por exemplo, possibilitando ao Cinder realizar **snapshots de volumes a partir de imagens do Glance**).
+
+Assim como o Glance, o **Cinder utilizará o Ceph como backend de armazenamento** (daí o uso de `block-device: None` no arquivo de configuração). Isso será implementado por meio do charm subordinado **cinder-ceph**:
+
+```bash
+juju deploy --channel yoga/stable cinder-ceph
+```
+
+Três relações podem ser adicionadas neste momento:
+
+```bash
+juju integrate cinder-ceph:storage-backend cinder:storage-backend
+juju integrate cinder-ceph:ceph ceph-mon:client
+juju integrate cinder-ceph:ceph-access nova-compute:ceph-access
+```
+
+### Ceph RADOS Gateway
