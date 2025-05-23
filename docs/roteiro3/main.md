@@ -486,3 +486,29 @@ juju integrate cinder-ceph:ceph-access nova-compute:ceph-access
 ```
 
 ### Ceph RADOS Gateway
+
+O **Ceph RADOS Gateway** será implantado para oferecer uma interface HTTP compatível com **S3** e **Swift**. Essa é uma alternativa ao uso do **OpenStack Swift**.
+
+O aplicativo **ceph-radosgw** será **containerizado** na máquina **0** com o charm **ceph-radosgw**. Para implantar:
+
+```bash
+juju deploy --to lxd:0 --channel quincy/stable ceph-radosgw
+```
+
+Uma única relação é necessária:
+
+```bash
+juju integrate ceph-radosgw:mon ceph-mon:radosgw
+```
+
+### Ceph-OSD Integration
+
+Por fim, chegamos ao último passo para terminar e integrar todas as nossas ferramentas. Execute o comando abaixo apenas se você estiver certeza de que todos os procedimentos anteriores foram realizados com sucesso.
+
+```
+juju config ceph-osd osd-devices='/dev/sdb'
+```
+
+Após esse último passo, você pode executar o comando juju status e seu terminal deve parecer algo com isso:
+
+![](img/final.jpeg)
