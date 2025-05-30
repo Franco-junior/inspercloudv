@@ -525,3 +525,28 @@ Para isso, é preciso seguir alguns passos:
 - criar os flavors para as VMs;
 - criar uma rede externa para conectar as VMs à rede física;
 - criar uma rede interna e um roteador para conectar as VMs à rede externa.
+
+Para obter controle da nuvem, a senha de administrador do Keystone e o certificado da CA são necessários. Essas informações podem ser obtidas mais facilmente usando um arquivo criado para esse fim — frequentemente chamado de arquivo “openrc”.
+
+Baixe o arquivo openrc no [link](https://docs.openstack.org/project-deploy-guide/charm-deployment-guide/latest/_downloads/c894c4911b9572f0b5f86bdfc5d12d8e/openrc) e guarde-o em um local seguro.
+
+Quando quiser usar esse arquivo, basta excutar ele. Supondo que esteja agora no seu diretório principal:
+
+```
+source openrc
+```
+
+## Acessando o dashborad Horizon
+
+Podemos acessar o dashboard do Horizon utilizando um túnel. Para isso precisamos saber o IP do dashboard, qual porta está escutando e também as credenciais de login. Vamos primeiro obter a senha de admin, utilizando o seguinte comando no openstack:
+
+```
+juju exec --unit keystone/leader leader-get admin_passwd
+```
+
+Com isso as credenciais de admin do horizon serão:
+
+- User name: admin
+- Password: senha do último comando
+- Domain: admin_domain
+
