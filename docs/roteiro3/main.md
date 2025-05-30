@@ -538,7 +538,15 @@ source openrc
 
 ## Acessando o dashborad Horizon
 
-Podemos acessar o dashboard do Horizon utilizando um túnel. Para isso precisamos saber o IP do dashboard, qual porta está escutando e também as credenciais de login. Vamos primeiro obter a senha de admin, utilizando o seguinte comando no openstack:
+Podemos acessar o dashboard do Horizon utilizando um túnel. Para isso precisamos saber o IP do dashboard, qual porta está escutando e também as credenciais de login. Vamos primeiro obter o IP do dashboard:
+
+```
+juju status
+```
+
+![](img/imagem_2025-05-30_194419919.png)
+
+Obtemos então o IP e a porta através do juju status. Vamos agora obter a senha de admin, utilizando o seguinte comando no openstack:
 
 ```
 juju exec --unit keystone/leader leader-get admin_passwd
@@ -550,3 +558,23 @@ Com isso as credenciais de admin do horizon serão:
 - Password: senha do último comando
 - Domain: admin_domain
 
+Agora vamos fazer o túnel para acessar o dashboard:
+
+```
+ssh cloud@IP_MAIN -L 8080:IP_DO_DASHBOARD:80
+```
+> Aqui tanto faz a porta ser 8080 ou 8081 etc, mas a porta 80 é a porta do dashboard horizon que obtemos do juju status e não pode ser outra porta além dessa
+
+Agora podemos acessar no navegador através do link http://IP_DASHBOARD/horizon e fazer login e assim conseguimos visualizar todo o ambiente do Horizon:
+
+*OVERVIEW*
+![](img/overview.jpeg)
+
+*INSTANCES*
+![](img/instances.jpeg)
+
+*TOPOLOGY*
+![](img/topology.jpeg)
+
+*MAAS*
+![](img/maas.jpeg)
