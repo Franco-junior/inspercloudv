@@ -567,14 +567,69 @@ ssh cloud@IP_MAIN -L 8080:IP_DO_DASHBOARD:80
 
 Agora podemos acessar no navegador através do link http://IP_DASHBOARD/horizon e fazer login e assim conseguimos visualizar todo o ambiente do Horizon:
 
-*OVERVIEW*
+**OVERVIEW**
 ![](img/overview.jpeg)
 
-*INSTANCES*
+**INSTANCES**
 ![](img/instances.jpeg)
 
-*TOPOLOGY*
+**TOPOLOGY**
 ![](img/topology.jpeg)
 
-*MAAS*
+**MAAS**
 ![](img/maas.jpeg)
+
+## Images e flavors
+
+Agora vamos trabalhar com images e flavors, mas antes vamos carregar as credenciais:
+
+```
+source openrc
+```
+Antes pequenos ajustes na rede:
+
+```
+juju config neutron-api enable-ml2-dns="true"
+juju config neutron-api-plugin-ovn dns-servers="172.16.0.1"
+```
+
+Importe uma imagem de boot no Glance para criar instâncias de servidor. Aqui, importamos uma imagem Jammy amd64:
+
+```
+mkdir ~/cloud-images
+
+wget http://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img \
+   -O ~/cloud-images/jammy-amd64.img
+```
+
+```
+openstack image create --public --container-format bare \
+   --disk-format qcow2 --file ~/cloud-images/jammy-amd64.img \
+   jammy-amd64
+```
+
+Crie os flavors (instance type) - SEM ephemeral disk:
+
+| Flavor Name | vCPUs | RAM (GB) | Disk |
+|-------------|-------|----------|------|
+| m1.tiny     | 1     | 1        | 20   |
+| m1.small    | 1     | 2        | 20   |
+| m1.medium   | 2     | 4        | 20   |
+| m1.large    | 4     | 8        | 20   |
+
+Crie uma rede externa pública (compartilhada), aqui chamada de ‘ext_net’. Usamos o tipo de provedor de rede ‘flat’ e seu provedor ‘physnet1’:
+
+```
+openstack network create --external --share \
+   --provider-network-type flat --provider-physical-network physnet1 \
+   ext_net
+```
+
+Crie a sub-rede, aqui chamada de ‘ext_subnet’, para a rede acima. Os valores utilizados são baseados no ambiente local. Por exemplo, lembre-se de que nossa sub-rede MAAS é ‘10.246.112.0/21’:
+
+```
+openstack subnet create --network ext_net --no-dhcp \
+   --gateway 10.246.112.1 --subnet-range 10.246.112.0/21 \
+   --allocation-pool start=10.246.116.23,end=10.246.116.87 \
+   ext_subnet
+```
