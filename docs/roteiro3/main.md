@@ -10,7 +10,13 @@ Este projeto visa construir um ambiente de nuvem privada utilizando OpenStack so
 
 Confira se os seus recursos fisicos seguem, no MÍNIMO, a tabela abaixo, volte ao dashboard do MAAS e crie as Tags conforme descrito:
 
-![](img/req.png)
+| Node name   | Tag(s)      | CPUs | NICs | RAM  | Disks | Storage |
+|-------------|-------------|------|------|------|-------|---------|
+| node1.maas  | controller  | 2    | 1    | 12.0 | 1     | 80.0    |
+| node2.maas  | reserva     | 2    | 1    | 16.0 | 2     | 80.0    |
+| node3.maas  | compute     | 2    | 1    | 32.0 | 2     | 80.0    |
+| node4.maas  | compute     | 2    | 1    | 32.0 | 2     | 80.0    |
+| node5.maas  | compute     | 2    | 1    | 32.0 | 2     | 80.0    |
 
 Antes de começar a instalação do Openstack, verifique se o MAAS está configurado corretamente (Brigdes, Subnets, Tags, etc).
 
@@ -681,3 +687,27 @@ openstack security group create --description 'Allow SSH' Allow_SSH
 openstack security group rule create --proto tcp --dst-port 22 Allow_SSH
 ```
 
+## Instância
+
+Agora vamos criar uma instância com imagem jammy amd64 e com flavor m1.tiny de nome *client* e sem *Novo Volume*:
+
+```
+openstack server create --image jammy-amd64 --flavor m1.tiny \
+   --key-name user1 --network user1_net --security-group Allow_SSH \
+   client
+```
+
+Solicite e atribua um endereço IP flutuante à nova instância:
+
+```
+FLOATING_IP=$(openstack floating ip create -f value -c floating_ip_address ext_net)
+openstack server add floating ip client $FLOATING_IP
+```
+
+Agora vamos conectar com a instância e testar se tudo funciona:
+
+```
+ssh -i ~/cloud-keys/user1-key ubuntu@$FLOATING_IP
+```
+
+Se o terminal da instância for acessado com sucesso então a instância está corretamente configurada.
