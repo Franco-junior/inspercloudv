@@ -901,3 +901,14 @@ sudo service nginx restart
 ```
 
 Com isso nosso nginx está pronto e irá distribuir entre as APIs.
+
+## Testando
+
+Para testar se nossas APIs funcionam corretamente nas instâncias criadas podemos utilizar um túnel com o IP externo do nginx que por sua vez irá redirecionar para uma das APIs:
+
+```
+ssh cloud@IP_MAIN -L 8080:IP_DO_NGINX:PORTA_NGINX
+```
+> A porta nginx é a porta definida dentro do arquivo de configuração no nginx
+
+Se o dashboard do docs da API aparecer significa que está tudo funcionando corretamente.
