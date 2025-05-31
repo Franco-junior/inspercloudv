@@ -760,6 +760,10 @@ flowchart LR
     user@{ img: "https://insper.github.io/computacao-nuvem/assets/images/fontawesome-user-icon.png", constraint: "on", h: 60, label: "User" }
 ```
 
+Vamos subir todas as instâncias primeiro e em seguida configurar cada uma delas:
+
+![](img/all.jpeg)
+
 ## Tarefa 1
 
 Para criar as instâncias da API precisamos pegar a imagem que está no docker Hub com a API que criamos na etapa 1 do projeto.
@@ -779,3 +783,19 @@ echo \
 sudo apt-get update
 ```
 
+Agora vamos baixar a imagem do docker hub:
+
+```
+sudo docker run -d -p 8080:8080 --env-file .env seu_username/nome-da-imagem
+```
+> Certifique de ter um arquivo .env com as credenciais do database que contenha o usuario, nome do database, link do host etc.
+
+Fazemos esses 2 passos para ambas as instâncias que irão conter a nossa API. Para verificar se está tudo ok com nossa API execute o comando:
+
+```
+sudo docker ps -a
+```
+
+## Tarefa 2
+
+Para a tarefa 2 vamos utilizar o postgres 
