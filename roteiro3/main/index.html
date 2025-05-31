@@ -131,6 +131,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#objetivos" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -443,6 +448,8 @@
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
       
       
+        
+      
       
       <a href="./" class="md-nav__link md-nav__link--active">
         
@@ -530,6 +537,8 @@
   
   
   
+    
+  
   
 </nav>
                   </div>
@@ -548,9 +557,668 @@
   
 
 
-  <h1>Roteiro 3</h1>
-
-
+<h1 id="objetivos">Objetivos</h1>
+<ul>
+<li>
+<p>Entender os conceitos básicos de Private Cloud.</p>
+</li>
+<li>
+<p>Aprofundar conceitos sobre redes virtuais SDN.</p>
+</li>
+</ul>
+<h1 id="infra">Infra</h1>
+<p>Este projeto visa construir um ambiente de nuvem privada utilizando OpenStack sobre uma infraestrutura gerenciada por MAAS e Juju, e então implantar uma aplicação específica nesse ambiente virtualizado.</p>
+<p>Confira se os seus recursos fisicos seguem, no MÍNIMO, a tabela abaixo, volte ao dashboard do MAAS e crie as Tags conforme descrito:</p>
+<table>
+<thead>
+<tr>
+<th>Node name</th>
+<th>Tag(s)</th>
+<th>CPUs</th>
+<th>NICs</th>
+<th>RAM</th>
+<th>Disks</th>
+<th>Storage</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>node1.maas</td>
+<td>controller</td>
+<td>2</td>
+<td>1</td>
+<td>12.0</td>
+<td>1</td>
+<td>80.0</td>
+</tr>
+<tr>
+<td>node2.maas</td>
+<td>reserva</td>
+<td>2</td>
+<td>1</td>
+<td>16.0</td>
+<td>2</td>
+<td>80.0</td>
+</tr>
+<tr>
+<td>node3.maas</td>
+<td>compute</td>
+<td>2</td>
+<td>1</td>
+<td>32.0</td>
+<td>2</td>
+<td>80.0</td>
+</tr>
+<tr>
+<td>node4.maas</td>
+<td>compute</td>
+<td>2</td>
+<td>1</td>
+<td>32.0</td>
+<td>2</td>
+<td>80.0</td>
+</tr>
+<tr>
+<td>node5.maas</td>
+<td>compute</td>
+<td>2</td>
+<td>1</td>
+<td>32.0</td>
+<td>2</td>
+<td>80.0</td>
+</tr>
+</tbody>
+</table>
+<p>Antes de começar a instalação do Openstack, verifique se o MAAS está configurado corretamente (Brigdes, Subnets, Tags, etc).</p>
+<p>Verifique se o bridge br-ex está configurado corretamente no MAAS. O br-ex é crucial para a comunicação do OpenStack com a rede externa. Ele deve estar configurado para TODOS os nós.</p>
+<h2 id="implementando-o-openstack">Implementando o OpenStack</h2>
+<p>É importante não instalar nada no server2 que deve estar reservado, altere os comandos que forem necessários para utilizar o Node server 1 como controller, o node server 2 como Reserva e os nodes server 3,4 e 5 como compute (onde o Openstack será instalado).
+Verifique o status (juju status) para ver se a implantação está correndo como o esperado.
+Aguarde a instalação terminar, só vá para o próximo passo quando tiver certeza que o comando anterior foi finalizado
+Esse roteiro é baseado na documentação oficial do Openstack, porém adaptado para o nosso ambiente. Logo, atente para o número de máquinas que você tem disponível e para a configuração de rede que você fez no MAAS.</p>
+<p>Para monitorar o status da instalação do Openstack, você pode usar o comando abaixo:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>watch -n 2 --color &quot;juju status --color&quot;
+</span></code></pre></div>
+<p>Em seguida, vamos começar a configurar o openstack pelo terminal da main:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>juju add-model --config default-series=jammy openstack
+</span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>juju switch maas-controller:openstack
+</span></code></pre></div>
+<h3 id="ceph-osd">Ceph OSD</h3>
+<p>O aplicativo <strong>ceph-osd</strong> será implantado em três nós com o charm <strong>ceph-osd</strong>.</p>
+<p>Os nomes dos dispositivos de bloco que sustentam os OSDs dependem do hardware nos nós do MAAS. Todos os dispositivos possíveis (em todos os nós) que serão usados para armazenamento do Ceph devem ser incluídos no valor da opção <strong>osd-devices</strong> (separados por espaço). Aqui, usaremos os mesmos dispositivos em cada nó: <code>/dev/sda</code> e <code>/dev/sdb</code>. O arquivo <strong>ceph-osd.yaml</strong> contém a configuração:</p>
+<p><strong>ceph-osd.yaml</strong></p>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nt">ceph-osd</span><span class="p">:</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nt">osd-devices</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/dev/sda /dev/sdb</span>
+</span></code></pre></div>
+<p>Para implantar o aplicativo, usaremos a tag <strong>compute</strong> que foi atribuída a cada um desses nós na página <em>Instalar MAAS</em>. O comando para implantar o aplicativo <strong>ceph-osd</strong> é:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>juju<span class="w"> </span>deploy<span class="w"> </span>-n<span class="w"> </span><span class="m">3</span><span class="w"> </span>--channel<span class="w"> </span>quincy/stable<span class="w"> </span>--config<span class="w"> </span>ceph-osd.yaml<span class="w"> </span>--constraints<span class="w"> </span><span class="nv">tags</span><span class="o">=</span>compute<span class="w"> </span>ceph-osd
+</span></code></pre></div>
+<p><strong>Nota</strong>: A opção <code>-n 3</code> especifica que três unidades do aplicativo <strong>ceph-osd</strong> devem ser implantadas.</p>
+<p>Se uma mensagem de uma unidade ceph-osd como <strong>“Non-pristine devices detected”</strong> aparecer na saída do comando <code>juju status</code>, será necessário usar as ações <strong>zap-disk</strong> e <strong>add-disk</strong> que acompanham o charm <strong>ceph-osd</strong>. A ação <strong>zap-disk</strong> é de natureza destrutiva. Use-a apenas se quiser apagar completamente o disco de todos os dados e assinaturas para uso pelo Ceph.</p>
+<h3 id="nova-compute">Nova Compute</h3>
+<p><strong>Nova</strong> é o projeto do OpenStack que fornece uma forma de provisionar instâncias de computação (também conhecidas como servidores virtuais). O charm <strong>nova-compute</strong> é implantado nos nós de computação com o charm <strong>nova-compute</strong>. O arquivo <strong>nova-compute.yaml</strong> contém a configuração:</p>
+<p><strong>nova-compute.yaml</strong></p>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nt">nova-compute</span><span class="p">:</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span><span class="nt">config-flags</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default_ephemeral_format=ext4</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span><span class="nt">enable-live-migration</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span><span class="nt">enable-resize</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">  </span><span class="nt">migration-auth-type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ssh</span>
+</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">  </span><span class="nt">virt-type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">qemu</span>
+</span></code></pre></div>
+<p>Os nós devem ser direcionados pelo ID da máquina, já que não há mais máquinas Juju (nós MAAS) livres disponíveis. Isso significa que estaremos colocando vários serviços em nossos nós. Escolhemos as máquinas <strong>0, 1 e 2</strong>. Para implantar:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>juju<span class="w"> </span>deploy<span class="w"> </span>-n<span class="w"> </span><span class="m">3</span><span class="w"> </span>--to<span class="w"> </span><span class="m">0</span>,1,2<span class="w"> </span>--channel<span class="w"> </span>yoga/stable<span class="w"> </span>--config<span class="w"> </span>nova-compute.yaml<span class="w"> </span>nova-compute
+</span></code></pre></div>
+<h3 id="mysql-innodb-cluster">MySQL InnoDB Cluster</h3>
+<p>O <strong>MySQL InnoDB Cluster</strong> sempre requer <strong>pelo menos três unidades de banco de dados</strong>. O aplicativo <strong>mysql-innodb-cluster</strong> é implantado em três nós com o charm <strong>mysql-innodb-cluster</strong>. Eles serão <strong>containerizados</strong> nas máquinas <strong>0, 1 e 2</strong>. Para implantar:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>juju<span class="w"> </span>deploy<span class="w"> </span>-n<span class="w"> </span><span class="m">3</span><span class="w"> </span>--to<span class="w"> </span>lxd:0,lxd:1,lxd:2<span class="w"> </span>--channel<span class="w"> </span><span class="m">8</span>.0/stable<span class="w"> </span>mysql-innodb-cluster
+</span></code></pre></div>
+<h3 id="vault">Vault</h3>
+<p>O <strong>Vault</strong> é necessário para gerenciar os certificados TLS que permitirão a comunicação criptografada entre os aplicativos da nuvem. O aplicativo <strong>vault</strong> será <strong>containerizado</strong> na máquina <strong>2</strong> com o charm <strong>vault</strong>. Para implantar:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>juju<span class="w"> </span>deploy<span class="w"> </span>--to<span class="w"> </span>lxd:2<span class="w"> </span>vault<span class="w"> </span>--channel<span class="w"> </span><span class="m">1</span>.8/stable
+</span></code></pre></div>
+<p>Este é o <strong>primeiro aplicativo</strong> a ser conectado ao banco de dados da nuvem que foi configurado na seção anterior. O processo é:</p>
+<ol>
+<li>Criar uma instância específica para o aplicativo do <strong>mysql-router</strong> com o charm subordinado <strong>mysql-router</strong>;</li>
+<li>Adicionar uma relação entre a instância do <strong>mysql-router</strong> e o banco de dados;</li>
+<li>Adicionar uma relação entre a instância do <strong>mysql-router</strong> e o aplicativo.</li>
+</ol>
+<p>A combinação dos passos <strong>2 e 3</strong> conecta o aplicativo ao banco de dados da nuvem.</p>
+<p>Aqui estão os comandos correspondentes para o Vault:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>juju<span class="w"> </span>deploy<span class="w"> </span>--channel<span class="w"> </span><span class="m">8</span>.0/stable<span class="w"> </span>mysql-router<span class="w"> </span>vault-mysql-router
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>juju<span class="w"> </span>integrate<span class="w"> </span>vault-mysql-router:db-router<span class="w"> </span>mysql-innodb-cluster:db-router
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>juju<span class="w"> </span>integrate<span class="w"> </span>vault-mysql-router:shared-db<span class="w"> </span>vault:shared-db
+</span></code></pre></div>
+<h4 id="desbloqueio-unseal">Desbloqueio (Unseal)</h4>
+<p>Agora o Vault deve ser <strong>inicializado e desbloqueado</strong>. O charm <strong>vault</strong> também precisará ser autorizado para realizar certas tarefas. Esses passos estão descritos na documentação do charm Vault. </p>
+<p>Instalando o cli do Vault e configurando-o:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>sudo snap install vault
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>export VAULT_ADDR=&quot;http://&lt;IP of vault unit&gt;:8200&quot;
+</span></code></pre></div>
+<p>Gerando:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>$ vault operator init -key-shares=5 -key-threshold=3
+</span></code></pre></div>
+<p>Assim iremos receber 5 Unseal Keys e 1 Initial Root Token. Copie e guarde as hashs geradas.
+Removendo o selo, repita a operação com 3 keys diferentes:</p>
+<p><div class="language-text highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>vault operator unseal &lt;Unseal Key&gt; # com 3 keys diferentes
+</span></code></pre></div>
+Autorizando o charm (esse passo precisa ser feito em 50 minutos):</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>export VAULT_TOKEN=&lt;Initial Root Token&gt;
+</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>vault token create -ttl=50m
+</span></code></pre></div>
+<p>Anote o token gerado pelo comando e em seguida digite o comando:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>juju run vault/leader authorize-charm token=token
+</span></code></pre></div>
+<h4 id="certificado-da-ca-autossinado">Certificado da CA (Autossinado)</h4>
+<p>Para fornecer ao Vault um certificado de autoridade (CA), é necessário <strong>gerar um certificado CA autossinado</strong>, para que ele possa emitir certificados para os serviços da API da nuvem. Isso está descrito na página <em>Gerenciando certificados TLS</em>. <strong>Execute isso agora</strong>:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>juju<span class="w"> </span>run<span class="w"> </span>vault/leader<span class="w"> </span>generate-root-ca
+</span></code></pre></div>
+<p>Os aplicativos da nuvem são habilitados para TLS por meio da relação <strong>vault:certificates</strong>. Abaixo, começamos com o banco de dados da nuvem. Embora ele já possua um certificado autossinado, é recomendado usar um <strong>certificado assinado pela CA do Vault</strong>:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>juju<span class="w"> </span>integrate<span class="w"> </span>mysql-innodb-cluster:certificates<span class="w"> </span>vault:certificates
+</span></code></pre></div>
+<h3 id="neutron">Neutron</h3>
+<p>A rede <strong>Neutron</strong> é implementada com quatro aplicativos:</p>
+<ul>
+<li><strong>neutron-api</strong></li>
+<li><strong>neutron-api-plugin-ovn</strong> (subordinado)</li>
+<li><strong>ovn-central</strong></li>
+<li><strong>ovn-chassis</strong> (subordinado)</li>
+</ul>
+<p>O arquivo <strong>neutron.yaml</strong> contém as configurações necessárias (apenas dois dos aplicativos requerem configuração):</p>
+<p><strong>neutron.yaml</strong></p>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="nt">ovn-chassis</span><span class="p">:</span>
+</span><span id="__span-17-2"><a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="w">  </span><span class="nt">bridge-interface-mappings</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">br-ex:eth0</span>
+</span><span id="__span-17-3"><a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="w">  </span><span class="nt">ovn-bridge-mappings</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">physnet1:br-ex</span>
+</span><span id="__span-17-4"><a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>
+</span><span id="__span-17-5"><a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="nt">neutron-api</span><span class="p">:</span>
+</span><span id="__span-17-6"><a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a><span class="w">  </span><span class="nt">neutron-security-groups</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</span><span id="__span-17-7"><a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a><span class="w">  </span><span class="nt">flat-network-providers</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">physnet1</span>
+</span></code></pre></div>
+<p>A configuração <code>bridge-interface-mappings</code> impacta o <strong>OVN Chassis</strong> e se refere a um mapeamento de ponte OVS para interface de rede. Conforme descrito na seção <em>Criar ponte OVS</em> na página <em>Instalar MAAS</em>, neste exemplo é <code>br-ex:enp1s0</code>.</p>
+<p><strong>Nota</strong></p>
+<p>Para usar <strong>endereços de hardware</strong> (em vez de nomes de interface comuns a todos os três nós), a opção <code>bridge-interface-mappings</code> pode ser expressa da seguinte forma (substitua pelos seus próprios valores):</p>
+<p><strong>neutron.yaml</strong></p>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-18-1"><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="nt">bridge-interface-mappings</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">&gt;-</span>
+</span><span id="__span-18-2"><a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="w">  </span><span class="no">br-ex:52:54:00:03:01:02</span>
+</span><span id="__span-18-3"><a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="w">  </span><span class="no">br-ex:52:54:00:03:01:03</span>
+</span><span id="__span-18-4"><a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="w">  </span><span class="no">br-ex:52:54:00:03:01:04</span>
+</span></code></pre></div>
+<p>A configuração <code>flat-network-providers</code> ativa o provedor de rede <strong>flat</strong> do Neutron usado neste cenário de exemplo e atribui a ele o nome <strong>physnet1</strong>. O provedor de rede flat e seu nome serão referenciados quando configurarmos a <strong>rede pública</strong> na próxima página.</p>
+<p>A configuração <code>ovn-bridge-mappings</code> mapeia a interface de dados para o provedor de rede flat.</p>
+<p>O aplicativo principal do OVN é o <strong>ovn-central</strong>, e ele requer <strong>pelo menos três unidades</strong>. Elas serão <strong>containerizadas</strong> nas máquinas <strong>0, 1 e 2</strong> com o charm <strong>ovn-central</strong>. Para implantar:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-19-1"><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>juju<span class="w"> </span>deploy<span class="w"> </span>-n<span class="w"> </span><span class="m">3</span><span class="w"> </span>--to<span class="w"> </span>lxd:0,lxd:1,lxd:2<span class="w"> </span>--channel<span class="w"> </span><span class="m">22</span>.03/stable<span class="w"> </span>ovn-central
+</span></code></pre></div>
+<p>O aplicativo <strong>neutron-api</strong> será <strong>containerizado</strong> na máquina <strong>1</strong> com o charm <strong>neutron-api</strong>:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-20-1"><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>juju<span class="w"> </span>deploy<span class="w"> </span>--to<span class="w"> </span>lxd:1<span class="w"> </span>--channel<span class="w"> </span>yoga/stable<span class="w"> </span>--config<span class="w"> </span>neutron.yaml<span class="w"> </span>neutron-api
+</span></code></pre></div>
+<p>Implante os charms subordinados com os charms <strong>neutron-api-plugin-ovn</strong> e <strong>ovn-chassis</strong>:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-21-1"><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>juju<span class="w"> </span>deploy<span class="w"> </span>--channel<span class="w"> </span>yoga/stable<span class="w"> </span>neutron-api-plugin-ovn
+</span><span id="__span-21-2"><a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>juju<span class="w"> </span>deploy<span class="w"> </span>--channel<span class="w"> </span><span class="m">22</span>.03/stable<span class="w"> </span>--config<span class="w"> </span>neutron.yaml<span class="w"> </span>ovn-chassis
+</span></code></pre></div>
+<p>Adicione as relações necessárias:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-22-1"><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>juju<span class="w"> </span>integrate<span class="w"> </span>neutron-api-plugin-ovn:neutron-plugin<span class="w"> </span>neutron-api:neutron-plugin-api-subordinate
+</span><span id="__span-22-2"><a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>juju<span class="w"> </span>integrate<span class="w"> </span>neutron-api-plugin-ovn:ovsdb-cms<span class="w"> </span>ovn-central:ovsdb-cms
+</span><span id="__span-22-3"><a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>juju<span class="w"> </span>integrate<span class="w"> </span>ovn-chassis:ovsdb<span class="w"> </span>ovn-central:ovsdb
+</span><span id="__span-22-4"><a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a>juju<span class="w"> </span>integrate<span class="w"> </span>ovn-chassis:nova-compute<span class="w"> </span>nova-compute:neutron-plugin
+</span><span id="__span-22-5"><a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>juju<span class="w"> </span>integrate<span class="w"> </span>neutron-api:certificates<span class="w"> </span>vault:certificates
+</span><span id="__span-22-6"><a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a>juju<span class="w"> </span>integrate<span class="w"> </span>neutron-api-plugin-ovn:certificates<span class="w"> </span>vault:certificates
+</span><span id="__span-22-7"><a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a>juju<span class="w"> </span>integrate<span class="w"> </span>ovn-central:certificates<span class="w"> </span>vault:certificates
+</span><span id="__span-22-8"><a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a>juju<span class="w"> </span>integrate<span class="w"> </span>ovn-chassis:certificates<span class="w"> </span>vault:certificates
+</span></code></pre></div>
+<p>Conecte o <strong>neutron-api</strong> ao banco de dados da nuvem:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-23-1"><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>juju<span class="w"> </span>deploy<span class="w"> </span>--channel<span class="w"> </span><span class="m">8</span>.0/stable<span class="w"> </span>mysql-router<span class="w"> </span>neutron-api-mysql-router
+</span><span id="__span-23-2"><a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>juju<span class="w"> </span>integrate<span class="w"> </span>neutron-api-mysql-router:db-router<span class="w"> </span>mysql-innodb-cluster:db-router
+</span><span id="__span-23-3"><a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>juju<span class="w"> </span>integrate<span class="w"> </span>neutron-api-mysql-router:shared-db<span class="w"> </span>neutron-api:shared-db
+</span></code></pre></div>
+<h3 id="keystone">Keystone</h3>
+<p>O aplicativo <strong>keystone</strong> será <strong>containerizado</strong> na máquina <strong>0</strong> com o charm <strong>keystone</strong>. Para implantar:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-24-1"><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>juju<span class="w"> </span>deploy<span class="w"> </span>--to<span class="w"> </span>lxd:0<span class="w"> </span>--channel<span class="w"> </span>yoga/stable<span class="w"> </span>keystone
+</span></code></pre></div>
+<p>Conecte o <strong>keystone</strong> ao banco de dados da nuvem:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-25-1"><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>juju<span class="w"> </span>deploy<span class="w"> </span>--channel<span class="w"> </span><span class="m">8</span>.0/stable<span class="w"> </span>mysql-router<span class="w"> </span>keystone-mysql-router
+</span><span id="__span-25-2"><a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>juju<span class="w"> </span>integrate<span class="w"> </span>keystone-mysql-router:db-router<span class="w"> </span>mysql-innodb-cluster:db-router
+</span><span id="__span-25-3"><a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a>juju<span class="w"> </span>integrate<span class="w"> </span>keystone-mysql-router:shared-db<span class="w"> </span>keystone:shared-db
+</span></code></pre></div>
+<p>Duas relações adicionais podem ser adicionadas neste momento:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-26-1"><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>juju<span class="w"> </span>integrate<span class="w"> </span>keystone:identity-service<span class="w"> </span>neutron-api:identity-service
+</span><span id="__span-26-2"><a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>juju<span class="w"> </span>integrate<span class="w"> </span>keystone:certificates<span class="w"> </span>vault:certificates
+</span></code></pre></div>
+<h3 id="rabbitmq">RabbitMQ</h3>
+<p>O aplicativo <strong>rabbitmq-server</strong> será <strong>containerizado</strong> na máquina <strong>2</strong> com o charm <strong>rabbitmq-server</strong>. Para implantar:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-27-1"><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>juju<span class="w"> </span>deploy<span class="w"> </span>--to<span class="w"> </span>lxd:2<span class="w"> </span>--channel<span class="w"> </span><span class="m">3</span>.9/stable<span class="w"> </span>rabbitmq-server
+</span></code></pre></div>
+<p>Duas relações podem ser adicionadas neste momento:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-28-1"><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>juju<span class="w"> </span>integrate<span class="w"> </span>rabbitmq-server:amqp<span class="w"> </span>neutron-api:amqp
+</span><span id="__span-28-2"><a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>juju<span class="w"> </span>integrate<span class="w"> </span>rabbitmq-server:amqp<span class="w"> </span>nova-compute:amqp
+</span></code></pre></div>
+<h3 id="nova-cloud-controller">Nova Cloud Controller</h3>
+<p>O aplicativo <strong>nova-cloud-controller</strong>, que inclui os serviços <strong>nova-scheduler</strong>, <strong>nova-api</strong> e <strong>nova-conductor</strong>, será <strong>containerizado</strong> na máquina <strong>2</strong> com o charm <strong>nova-cloud-controller</strong>. O arquivo <strong>ncc.yaml</strong> contém a configuração:</p>
+<p><strong>ncc.yaml</strong></p>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-29-1"><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span class="nt">nova-cloud-controller</span><span class="p">:</span>
+</span><span id="__span-29-2"><a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a><span class="w">  </span><span class="nt">network-manager</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Neutron</span>
+</span></code></pre></div>
+<p>Para implantar:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-30-1"><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>juju<span class="w"> </span>deploy<span class="w"> </span>--to<span class="w"> </span>lxd:2<span class="w"> </span>--channel<span class="w"> </span>yoga/stable<span class="w"> </span>--config<span class="w"> </span>ncc.yaml<span class="w"> </span>nova-cloud-controller
+</span></code></pre></div>
+<p>Conecte o <strong>nova-cloud-controller</strong> ao banco de dados da nuvem:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-31-1"><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>juju<span class="w"> </span>deploy<span class="w"> </span>--channel<span class="w"> </span><span class="m">8</span>.0/stable<span class="w"> </span>mysql-router<span class="w"> </span>ncc-mysql-router
+</span><span id="__span-31-2"><a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a>juju<span class="w"> </span>integrate<span class="w"> </span>ncc-mysql-router:db-router<span class="w"> </span>mysql-innodb-cluster:db-router
+</span><span id="__span-31-3"><a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a>juju<span class="w"> </span>integrate<span class="w"> </span>ncc-mysql-router:shared-db<span class="w"> </span>nova-cloud-controller:shared-db
+</span></code></pre></div>
+<p>Para manter a saída do <code>juju status</code> mais compacta, o nome esperado da aplicação <strong>nova-cloud-controller-mysql-router</strong> foi abreviado para <strong>ncc-mysql-router</strong>.</p>
+<p>Cinco relações adicionais podem ser adicionadas neste momento:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-32-1"><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>juju<span class="w"> </span>integrate<span class="w"> </span>nova-cloud-controller:identity-service<span class="w"> </span>keystone:identity-service
+</span><span id="__span-32-2"><a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a>juju<span class="w"> </span>integrate<span class="w"> </span>nova-cloud-controller:amqp<span class="w"> </span>rabbitmq-server:amqp
+</span><span id="__span-32-3"><a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a>juju<span class="w"> </span>integrate<span class="w"> </span>nova-cloud-controller:neutron-api<span class="w"> </span>neutron-api:neutron-api
+</span><span id="__span-32-4"><a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a>juju<span class="w"> </span>integrate<span class="w"> </span>nova-cloud-controller:cloud-compute<span class="w"> </span>nova-compute:cloud-compute
+</span><span id="__span-32-5"><a id="__codelineno-32-5" name="__codelineno-32-5" href="#__codelineno-32-5"></a>juju<span class="w"> </span>integrate<span class="w"> </span>nova-cloud-controller:certificates<span class="w"> </span>vault:certificates
+</span></code></pre></div>
+<h3 id="placement">Placement</h3>
+<p>O aplicativo <strong>placement</strong> será <strong>containerizado</strong> na máquina <strong>2</strong> com o charm <strong>placement</strong>. Para implantar:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-33-1"><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>juju<span class="w"> </span>deploy<span class="w"> </span>--to<span class="w"> </span>lxd:2<span class="w"> </span>--channel<span class="w"> </span>yoga/stable<span class="w"> </span>placement
+</span></code></pre></div>
+<p>Conecte o <strong>placement</strong> ao banco de dados da nuvem:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-34-1"><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>juju<span class="w"> </span>deploy<span class="w"> </span>--channel<span class="w"> </span><span class="m">8</span>.0/stable<span class="w"> </span>mysql-router<span class="w"> </span>placement-mysql-router
+</span><span id="__span-34-2"><a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a>juju<span class="w"> </span>integrate<span class="w"> </span>placement-mysql-router:db-router<span class="w"> </span>mysql-innodb-cluster:db-router
+</span><span id="__span-34-3"><a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a>juju<span class="w"> </span>integrate<span class="w"> </span>placement-mysql-router:shared-db<span class="w"> </span>placement:shared-db
+</span></code></pre></div>
+<p>Três relações adicionais podem ser adicionadas neste momento:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-35-1"><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a>juju<span class="w"> </span>integrate<span class="w"> </span>placement:identity-service<span class="w"> </span>keystone:identity-service
+</span><span id="__span-35-2"><a id="__codelineno-35-2" name="__codelineno-35-2" href="#__codelineno-35-2"></a>juju<span class="w"> </span>integrate<span class="w"> </span>placement:placement<span class="w"> </span>nova-cloud-controller:placement
+</span><span id="__span-35-3"><a id="__codelineno-35-3" name="__codelineno-35-3" href="#__codelineno-35-3"></a>juju<span class="w"> </span>integrate<span class="w"> </span>placement:certificates<span class="w"> </span>vault:certificates
+</span></code></pre></div>
+<h3 id="horizon-openstack-dashboard">Horizon - OpenStack Dashboard</h3>
+<p>O aplicativo <strong>openstack-dashboard</strong> (Horizon) será <strong>containerizado</strong> na máquina <strong>2</strong> com o charm <strong>openstack-dashboard</strong>. Para implantar:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-36-1"><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a>juju<span class="w"> </span>deploy<span class="w"> </span>--to<span class="w"> </span>lxd:2<span class="w"> </span>--channel<span class="w"> </span>yoga/stable<span class="w"> </span>openstack-dashboard
+</span></code></pre></div>
+<p>Conecte o <strong>openstack-dashboard</strong> ao banco de dados da nuvem:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-37-1"><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a>juju<span class="w"> </span>deploy<span class="w"> </span>--channel<span class="w"> </span><span class="m">8</span>.0/stable<span class="w"> </span>mysql-router<span class="w"> </span>dashboard-mysql-router
+</span><span id="__span-37-2"><a id="__codelineno-37-2" name="__codelineno-37-2" href="#__codelineno-37-2"></a>juju<span class="w"> </span>integrate<span class="w"> </span>dashboard-mysql-router:db-router<span class="w"> </span>mysql-innodb-cluster:db-router
+</span><span id="__span-37-3"><a id="__codelineno-37-3" name="__codelineno-37-3" href="#__codelineno-37-3"></a>juju<span class="w"> </span>integrate<span class="w"> </span>dashboard-mysql-router:shared-db<span class="w"> </span>openstack-dashboard:shared-db
+</span></code></pre></div>
+<p>Para manter a saída do <code>juju status</code> mais compacta, o nome esperado da aplicação <strong>openstack-dashboard-mysql-router</strong> foi abreviado para <strong>dashboard-mysql-router</strong>.</p>
+<p>Duas relações adicionais podem ser adicionadas neste momento:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-38-1"><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a>juju<span class="w"> </span>integrate<span class="w"> </span>openstack-dashboard:identity-service<span class="w"> </span>keystone:identity-service
+</span><span id="__span-38-2"><a id="__codelineno-38-2" name="__codelineno-38-2" href="#__codelineno-38-2"></a>juju<span class="w"> </span>integrate<span class="w"> </span>openstack-dashboard:certificates<span class="w"> </span>vault:certificates
+</span></code></pre></div>
+<h3 id="glance">Glance</h3>
+<p>O aplicativo <strong>glance</strong> será <strong>containerizado</strong> na máquina <strong>2</strong> com o charm <strong>glance</strong>. Para implantar:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-39-1"><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a>juju<span class="w"> </span>deploy<span class="w"> </span>--to<span class="w"> </span>lxd:2<span class="w"> </span>--channel<span class="w"> </span>yoga/stable<span class="w"> </span>glance
+</span></code></pre></div>
+<p>Conecte o <strong>glance</strong> ao banco de dados da nuvem:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-40-1"><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a>juju<span class="w"> </span>deploy<span class="w"> </span>--channel<span class="w"> </span><span class="m">8</span>.0/stable<span class="w"> </span>mysql-router<span class="w"> </span>glance-mysql-router
+</span><span id="__span-40-2"><a id="__codelineno-40-2" name="__codelineno-40-2" href="#__codelineno-40-2"></a>juju<span class="w"> </span>integrate<span class="w"> </span>glance-mysql-router:db-router<span class="w"> </span>mysql-innodb-cluster:db-router
+</span><span id="__span-40-3"><a id="__codelineno-40-3" name="__codelineno-40-3" href="#__codelineno-40-3"></a>juju<span class="w"> </span>integrate<span class="w"> </span>glance-mysql-router:shared-db<span class="w"> </span>glance:shared-db
+</span></code></pre></div>
+<p>Quatro relações adicionais podem ser adicionadas neste momento:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-41-1"><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a>juju<span class="w"> </span>integrate<span class="w"> </span>glance:image-service<span class="w"> </span>nova-cloud-controller:image-service
+</span><span id="__span-41-2"><a id="__codelineno-41-2" name="__codelineno-41-2" href="#__codelineno-41-2"></a>juju<span class="w"> </span>integrate<span class="w"> </span>glance:image-service<span class="w"> </span>nova-compute:image-service
+</span><span id="__span-41-3"><a id="__codelineno-41-3" name="__codelineno-41-3" href="#__codelineno-41-3"></a>juju<span class="w"> </span>integrate<span class="w"> </span>glance:identity-service<span class="w"> </span>keystone:identity-service
+</span><span id="__span-41-4"><a id="__codelineno-41-4" name="__codelineno-41-4" href="#__codelineno-41-4"></a>juju<span class="w"> </span>integrate<span class="w"> </span>glance:certificates<span class="w"> </span>vault:certificates
+</span></code></pre></div>
+<h3 id="ceph-monitor">Ceph Monitor</h3>
+<p>O aplicativo <strong>ceph-mon</strong> será <strong>containerizado</strong> nas máquinas <strong>0, 1 e 2</strong> com o charm <strong>ceph-mon</strong>. O arquivo <strong>ceph-mon.yaml</strong> contém a configuração:</p>
+<p><strong>ceph-mon.yaml</strong></p>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-42-1"><a id="__codelineno-42-1" name="__codelineno-42-1" href="#__codelineno-42-1"></a><span class="nt">ceph-mon</span><span class="p">:</span>
+</span><span id="__span-42-2"><a id="__codelineno-42-2" name="__codelineno-42-2" href="#__codelineno-42-2"></a><span class="w">  </span><span class="nt">expected-osd-count</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+</span><span id="__span-42-3"><a id="__codelineno-42-3" name="__codelineno-42-3" href="#__codelineno-42-3"></a><span class="w">  </span><span class="nt">monitor-count</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+</span></code></pre></div>
+<p>A configuração acima informa ao cluster MON que ele é composto por <strong>três nós</strong> e que deve esperar <strong>pelo menos três OSDs (discos)</strong>.</p>
+<p>Para implantar:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-43-1"><a id="__codelineno-43-1" name="__codelineno-43-1" href="#__codelineno-43-1"></a>juju<span class="w"> </span>deploy<span class="w"> </span>-n<span class="w"> </span><span class="m">3</span><span class="w"> </span>--to<span class="w"> </span>lxd:0,lxd:1,lxd:2<span class="w"> </span>--channel<span class="w"> </span>quincy/stable<span class="w"> </span>--config<span class="w"> </span>ceph-mon.yaml<span class="w"> </span>ceph-mon
+</span></code></pre></div>
+<p>Três relações podem ser adicionadas neste momento:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-44-1"><a id="__codelineno-44-1" name="__codelineno-44-1" href="#__codelineno-44-1"></a>juju<span class="w"> </span>integrate<span class="w"> </span>ceph-mon:osd<span class="w"> </span>ceph-osd:mon
+</span><span id="__span-44-2"><a id="__codelineno-44-2" name="__codelineno-44-2" href="#__codelineno-44-2"></a>juju<span class="w"> </span>integrate<span class="w"> </span>ceph-mon:client<span class="w"> </span>nova-compute:ceph
+</span><span id="__span-44-3"><a id="__codelineno-44-3" name="__codelineno-44-3" href="#__codelineno-44-3"></a>juju<span class="w"> </span>integrate<span class="w"> </span>ceph-mon:client<span class="w"> </span>glance:ceph
+</span></code></pre></div>
+<p>Sobre as relações acima:</p>
+<ul>
+<li>
+<p>A relação <strong>nova-compute:ceph</strong> faz com que o <strong>Ceph</strong> seja o <strong>backend de armazenamento</strong> para as imagens de disco <strong>não bootáveis</strong> do Nova. Para que isso tenha efeito, a opção do charm <strong>nova-compute</strong>, chamada <code>libvirt-image-backend</code>, deve estar definida como <code>'rbd'</code>.</p>
+</li>
+<li>
+<p>A relação <strong>glance:ceph</strong> faz com que o <strong>Ceph</strong> seja o <strong>backend de armazenamento</strong> para o <strong>Glance</strong>.</p>
+</li>
+</ul>
+<h3 id="cinder">Cinder</h3>
+<p>O aplicativo <strong>cinder</strong> será <strong>containerizado</strong> na máquina <strong>1</strong> com o charm <strong>cinder</strong>. O arquivo <strong>cinder.yaml</strong> contém a seguinte configuração:</p>
+<p><strong>cinder.yaml</strong></p>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-45-1"><a id="__codelineno-45-1" name="__codelineno-45-1" href="#__codelineno-45-1"></a><span class="nt">cinder</span><span class="p">:</span>
+</span><span id="__span-45-2"><a id="__codelineno-45-2" name="__codelineno-45-2" href="#__codelineno-45-2"></a><span class="w">  </span><span class="nt">block-device</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">None</span>
+</span><span id="__span-45-3"><a id="__codelineno-45-3" name="__codelineno-45-3" href="#__codelineno-45-3"></a><span class="w">  </span><span class="nt">glance-api-version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+</span></code></pre></div>
+<p>A opção <code>block-device</code> está definida como <code>'None'</code> para indicar que o charm <strong>não deve gerenciar dispositivos de bloco</strong>. A opção <code>glance-api-version</code> está definida como <code>'2'</code> para indicar que deve ser usada a versão 2 da API do Glance.</p>
+<p>Para implantar:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-46-1"><a id="__codelineno-46-1" name="__codelineno-46-1" href="#__codelineno-46-1"></a>juju<span class="w"> </span>deploy<span class="w"> </span>--to<span class="w"> </span>lxd:1<span class="w"> </span>--channel<span class="w"> </span>yoga/stable<span class="w"> </span>--config<span class="w"> </span>cinder.yaml<span class="w"> </span>cinder
+</span></code></pre></div>
+<p>Conecte o <strong>cinder</strong> ao banco de dados da nuvem:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-47-1"><a id="__codelineno-47-1" name="__codelineno-47-1" href="#__codelineno-47-1"></a>juju<span class="w"> </span>deploy<span class="w"> </span>--channel<span class="w"> </span><span class="m">8</span>.0/stable<span class="w"> </span>mysql-router<span class="w"> </span>cinder-mysql-router
+</span><span id="__span-47-2"><a id="__codelineno-47-2" name="__codelineno-47-2" href="#__codelineno-47-2"></a>juju<span class="w"> </span>integrate<span class="w"> </span>cinder-mysql-router:db-router<span class="w"> </span>mysql-innodb-cluster:db-router
+</span><span id="__span-47-3"><a id="__codelineno-47-3" name="__codelineno-47-3" href="#__codelineno-47-3"></a>juju<span class="w"> </span>integrate<span class="w"> </span>cinder-mysql-router:shared-db<span class="w"> </span>cinder:shared-db
+</span></code></pre></div>
+<p>Cinco relações adicionais podem ser adicionadas neste momento:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-48-1"><a id="__codelineno-48-1" name="__codelineno-48-1" href="#__codelineno-48-1"></a>juju<span class="w"> </span>integrate<span class="w"> </span>cinder:cinder-volume-service<span class="w"> </span>nova-cloud-controller:cinder-volume-service
+</span><span id="__span-48-2"><a id="__codelineno-48-2" name="__codelineno-48-2" href="#__codelineno-48-2"></a>juju<span class="w"> </span>integrate<span class="w"> </span>cinder:identity-service<span class="w"> </span>keystone:identity-service
+</span><span id="__span-48-3"><a id="__codelineno-48-3" name="__codelineno-48-3" href="#__codelineno-48-3"></a>juju<span class="w"> </span>integrate<span class="w"> </span>cinder:amqp<span class="w"> </span>rabbitmq-server:amqp
+</span><span id="__span-48-4"><a id="__codelineno-48-4" name="__codelineno-48-4" href="#__codelineno-48-4"></a>juju<span class="w"> </span>integrate<span class="w"> </span>cinder:image-service<span class="w"> </span>glance:image-service
+</span><span id="__span-48-5"><a id="__codelineno-48-5" name="__codelineno-48-5" href="#__codelineno-48-5"></a>juju<span class="w"> </span>integrate<span class="w"> </span>cinder:certificates<span class="w"> </span>vault:certificates
+</span></code></pre></div>
+<p>A relação acima com <strong>glance:image-service</strong> permitirá que o <strong>Cinder consuma a API do Glance</strong> (por exemplo, possibilitando ao Cinder realizar <strong>snapshots de volumes a partir de imagens do Glance</strong>).</p>
+<p>Assim como o Glance, o <strong>Cinder utilizará o Ceph como backend de armazenamento</strong> (daí o uso de <code>block-device: None</code> no arquivo de configuração). Isso será implementado por meio do charm subordinado <strong>cinder-ceph</strong>:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-49-1"><a id="__codelineno-49-1" name="__codelineno-49-1" href="#__codelineno-49-1"></a>juju<span class="w"> </span>deploy<span class="w"> </span>--channel<span class="w"> </span>yoga/stable<span class="w"> </span>cinder-ceph
+</span></code></pre></div>
+<p>Três relações podem ser adicionadas neste momento:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-50-1"><a id="__codelineno-50-1" name="__codelineno-50-1" href="#__codelineno-50-1"></a>juju<span class="w"> </span>integrate<span class="w"> </span>cinder-ceph:storage-backend<span class="w"> </span>cinder:storage-backend
+</span><span id="__span-50-2"><a id="__codelineno-50-2" name="__codelineno-50-2" href="#__codelineno-50-2"></a>juju<span class="w"> </span>integrate<span class="w"> </span>cinder-ceph:ceph<span class="w"> </span>ceph-mon:client
+</span><span id="__span-50-3"><a id="__codelineno-50-3" name="__codelineno-50-3" href="#__codelineno-50-3"></a>juju<span class="w"> </span>integrate<span class="w"> </span>cinder-ceph:ceph-access<span class="w"> </span>nova-compute:ceph-access
+</span></code></pre></div>
+<h3 id="ceph-rados-gateway">Ceph RADOS Gateway</h3>
+<p>O <strong>Ceph RADOS Gateway</strong> será implantado para oferecer uma interface HTTP compatível com <strong>S3</strong> e <strong>Swift</strong>. Essa é uma alternativa ao uso do <strong>OpenStack Swift</strong>.</p>
+<p>O aplicativo <strong>ceph-radosgw</strong> será <strong>containerizado</strong> na máquina <strong>0</strong> com o charm <strong>ceph-radosgw</strong>. Para implantar:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-51-1"><a id="__codelineno-51-1" name="__codelineno-51-1" href="#__codelineno-51-1"></a>juju<span class="w"> </span>deploy<span class="w"> </span>--to<span class="w"> </span>lxd:0<span class="w"> </span>--channel<span class="w"> </span>quincy/stable<span class="w"> </span>ceph-radosgw
+</span></code></pre></div>
+<p>Uma única relação é necessária:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-52-1"><a id="__codelineno-52-1" name="__codelineno-52-1" href="#__codelineno-52-1"></a>juju<span class="w"> </span>integrate<span class="w"> </span>ceph-radosgw:mon<span class="w"> </span>ceph-mon:radosgw
+</span></code></pre></div>
+<h3 id="ceph-osd-integration">Ceph-OSD Integration</h3>
+<p>Por fim, chegamos ao último passo para terminar e integrar todas as nossas ferramentas. Execute o comando abaixo apenas se você estiver certeza de que todos os procedimentos anteriores foram realizados com sucesso.</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-53-1"><a id="__codelineno-53-1" name="__codelineno-53-1" href="#__codelineno-53-1"></a>juju config ceph-osd osd-devices=&#39;/dev/sdb&#39;
+</span></code></pre></div>
+<p>Após esse último passo, você pode executar o comando juju status e seu terminal deve parecer algo com isso:</p>
+<p><a class="glightbox" href="../img/final.jpeg" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="" src="../img/final.jpeg" /></a></p>
+<h1 id="setup">Setup</h1>
+<p>Agora vamos configurar os serviços das VMs, dos discos e da estrutura de rede virtual</p>
+<p>Para isso, é preciso seguir alguns passos:</p>
+<ul>
+<li>carregar as variáveis de ambiente e se autenticar no sistema através do openrc;</li>
+<li>utilizar o dashboard para visualizar as mudanças;</li>
+<li>importar uma imagem do Ubuntu Jammy;</li>
+<li>criar os flavors para as VMs;</li>
+<li>criar uma rede externa para conectar as VMs à rede física;</li>
+<li>criar uma rede interna e um roteador para conectar as VMs à rede externa.</li>
+</ul>
+<p>Para obter controle da nuvem, a senha de administrador do Keystone e o certificado da CA são necessários. Essas informações podem ser obtidas mais facilmente usando um arquivo criado para esse fim — frequentemente chamado de arquivo “openrc”.</p>
+<p>Baixe o arquivo openrc no <a href="https://docs.openstack.org/project-deploy-guide/charm-deployment-guide/latest/_downloads/c894c4911b9572f0b5f86bdfc5d12d8e/openrc">link</a> e guarde-o em um local seguro.</p>
+<p>Quando quiser usar esse arquivo, basta excutar ele. Supondo que esteja agora no seu diretório principal:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-54-1"><a id="__codelineno-54-1" name="__codelineno-54-1" href="#__codelineno-54-1"></a>source openrc
+</span></code></pre></div>
+<h2 id="acessando-o-dashborad-horizon">Acessando o dashborad Horizon</h2>
+<p>Podemos acessar o dashboard do Horizon utilizando um túnel. Para isso precisamos saber o IP do dashboard, qual porta está escutando e também as credenciais de login. Vamos primeiro obter o IP do dashboard:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-55-1"><a id="__codelineno-55-1" name="__codelineno-55-1" href="#__codelineno-55-1"></a>juju status
+</span></code></pre></div>
+<p><a class="glightbox" href="../img/imagem_2025-05-30_194419919.png" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="" src="../img/imagem_2025-05-30_194419919.png" /></a></p>
+<p>Obtemos então o IP e a porta através do juju status. Vamos agora obter a senha de admin, utilizando o seguinte comando no openstack:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-56-1"><a id="__codelineno-56-1" name="__codelineno-56-1" href="#__codelineno-56-1"></a>juju exec --unit keystone/leader leader-get admin_passwd
+</span></code></pre></div>
+<p>Com isso as credenciais de admin do horizon serão:</p>
+<ul>
+<li>User name: admin</li>
+<li>Password: senha do último comando</li>
+<li>Domain: admin_domain</li>
+</ul>
+<p>Agora vamos fazer o túnel para acessar o dashboard:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-57-1"><a id="__codelineno-57-1" name="__codelineno-57-1" href="#__codelineno-57-1"></a>ssh cloud@IP_MAIN -L 8080:IP_DO_DASHBOARD:80
+</span></code></pre></div>
+<blockquote>
+<p>Aqui tanto faz a porta ser 8080 ou 8081 etc, mas a porta 80 é a porta do dashboard horizon que obtemos do juju status e não pode ser outra porta além dessa</p>
+</blockquote>
+<p>Agora podemos acessar no navegador através do link http://IP_DASHBOARD/horizon e fazer login e assim conseguimos visualizar todo o ambiente do Horizon:</p>
+<p><strong>OVERVIEW</strong>
+<a class="glightbox" href="../img/overview.jpeg" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="" src="../img/overview.jpeg" /></a></p>
+<p><strong>INSTANCES</strong>
+<a class="glightbox" href="../img/instances.jpeg" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="" src="../img/instances.jpeg" /></a></p>
+<p><strong>TOPOLOGY</strong>
+<a class="glightbox" href="../img/topology.jpeg" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="" src="../img/topology.jpeg" /></a></p>
+<p><strong>MAAS</strong>
+<a class="glightbox" href="../img/maas.jpeg" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="" src="../img/maas.jpeg" /></a></p>
+<h2 id="images-e-flavors">Images e flavors</h2>
+<p>Agora vamos trabalhar com images e flavors, mas antes vamos carregar as credenciais:</p>
+<p><div class="language-text highlight"><pre><span></span><code><span id="__span-58-1"><a id="__codelineno-58-1" name="__codelineno-58-1" href="#__codelineno-58-1"></a>source openrc
+</span></code></pre></div>
+Antes pequenos ajustes na rede:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-59-1"><a id="__codelineno-59-1" name="__codelineno-59-1" href="#__codelineno-59-1"></a>juju config neutron-api enable-ml2-dns=&quot;true&quot;
+</span><span id="__span-59-2"><a id="__codelineno-59-2" name="__codelineno-59-2" href="#__codelineno-59-2"></a>juju config neutron-api-plugin-ovn dns-servers=&quot;172.16.0.1&quot;
+</span></code></pre></div>
+<p>Importe uma imagem de boot no Glance para criar instâncias de servidor. Aqui, importamos uma imagem Jammy amd64:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-60-1"><a id="__codelineno-60-1" name="__codelineno-60-1" href="#__codelineno-60-1"></a>mkdir ~/cloud-images
+</span><span id="__span-60-2"><a id="__codelineno-60-2" name="__codelineno-60-2" href="#__codelineno-60-2"></a>
+</span><span id="__span-60-3"><a id="__codelineno-60-3" name="__codelineno-60-3" href="#__codelineno-60-3"></a>wget http://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img \
+</span><span id="__span-60-4"><a id="__codelineno-60-4" name="__codelineno-60-4" href="#__codelineno-60-4"></a>   -O ~/cloud-images/jammy-amd64.img
+</span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-61-1"><a id="__codelineno-61-1" name="__codelineno-61-1" href="#__codelineno-61-1"></a>openstack image create --public --container-format bare \
+</span><span id="__span-61-2"><a id="__codelineno-61-2" name="__codelineno-61-2" href="#__codelineno-61-2"></a>   --disk-format qcow2 --file ~/cloud-images/jammy-amd64.img \
+</span><span id="__span-61-3"><a id="__codelineno-61-3" name="__codelineno-61-3" href="#__codelineno-61-3"></a>   jammy-amd64
+</span></code></pre></div>
+<p>Crie os flavors (instance type) - SEM ephemeral disk:</p>
+<table>
+<thead>
+<tr>
+<th>Flavor Name</th>
+<th>vCPUs</th>
+<th>RAM (GB)</th>
+<th>Disk</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>m1.tiny</td>
+<td>1</td>
+<td>1</td>
+<td>20</td>
+</tr>
+<tr>
+<td>m1.small</td>
+<td>1</td>
+<td>2</td>
+<td>20</td>
+</tr>
+<tr>
+<td>m1.medium</td>
+<td>2</td>
+<td>4</td>
+<td>20</td>
+</tr>
+<tr>
+<td>m1.large</td>
+<td>4</td>
+<td>8</td>
+<td>20</td>
+</tr>
+</tbody>
+</table>
+<h2 id="rede-externa">Rede externa</h2>
+<p>Crie uma rede externa pública (compartilhada), aqui chamada de ‘ext_net’. Usamos o tipo de provedor de rede ‘flat’ e seu provedor ‘physnet1’:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-62-1"><a id="__codelineno-62-1" name="__codelineno-62-1" href="#__codelineno-62-1"></a>openstack network create --external --share \
+</span><span id="__span-62-2"><a id="__codelineno-62-2" name="__codelineno-62-2" href="#__codelineno-62-2"></a>   --provider-network-type flat --provider-physical-network physnet1 \
+</span><span id="__span-62-3"><a id="__codelineno-62-3" name="__codelineno-62-3" href="#__codelineno-62-3"></a>   ext_net
+</span></code></pre></div>
+<p>Crie a sub-rede, aqui chamada de ‘ext_subnet’, para a rede acima. Os valores utilizados são baseados no ambiente local. Usar uma faixa de alocação entre 172.16.7.0 e 172.16.8.255:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-63-1"><a id="__codelineno-63-1" name="__codelineno-63-1" href="#__codelineno-63-1"></a>openstack subnet create --network ext_net --no-dhcp \
+</span><span id="__span-63-2"><a id="__codelineno-63-2" name="__codelineno-63-2" href="#__codelineno-63-2"></a>   --gateway 172.16.0.1 --subnet-range 172.16.0.0/20 \
+</span><span id="__span-63-3"><a id="__codelineno-63-3" name="__codelineno-63-3" href="#__codelineno-63-3"></a>   --allocation-pool start=172.16.7.0,end=172.16.8.255 \
+</span><span id="__span-63-4"><a id="__codelineno-63-4" name="__codelineno-63-4" href="#__codelineno-63-4"></a>   ext_subnet
+</span></code></pre></div>
+<h2 id="rede-interna-e-roteador">Rede interna e roteador</h2>
+<p>Para obter um endereço IP fixo para acessar quaisquer instâncias criadas, precisamos de uma rede específica do projeto com uma sub-rede privada. Também precisaremos de um roteador para conectar essa rede à rede pública criada anteriormente.</p>
+<p>O usuário não-administrador agora cria uma rede interna privada chamada ‘user1_net’ e uma sub-rede correspondente chamada ‘user1_subnet’. Usar a subnet 192.169.0.0/24. Não use DNS:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-64-1"><a id="__codelineno-64-1" name="__codelineno-64-1" href="#__codelineno-64-1"></a>openstack network create --internal user1_net
+</span><span id="__span-64-2"><a id="__codelineno-64-2" name="__codelineno-64-2" href="#__codelineno-64-2"></a>
+</span><span id="__span-64-3"><a id="__codelineno-64-3" name="__codelineno-64-3" href="#__codelineno-64-3"></a>openstack subnet create --network user1_net \
+</span><span id="__span-64-4"><a id="__codelineno-64-4" name="__codelineno-64-4" href="#__codelineno-64-4"></a>   --subnet-range 192.169.0.0/24 \
+</span><span id="__span-64-5"><a id="__codelineno-64-5" name="__codelineno-64-5" href="#__codelineno-64-5"></a>   --allocation-pool start=192.169.0.10,end=192.169.0.99 \
+</span><span id="__span-64-6"><a id="__codelineno-64-6" name="__codelineno-64-6" href="#__codelineno-64-6"></a>   user1_subnet
+</span></code></pre></div>
+<p>Agora, um roteador chamado ‘user1_router’ é criado, adicionado à sub-rede e configurado para usar a rede externa pública como sua rede de gateway:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-65-1"><a id="__codelineno-65-1" name="__codelineno-65-1" href="#__codelineno-65-1"></a>openstack router create user1_router
+</span><span id="__span-65-2"><a id="__codelineno-65-2" name="__codelineno-65-2" href="#__codelineno-65-2"></a>openstack router add subnet user1_router user1_subnet
+</span><span id="__span-65-3"><a id="__codelineno-65-3" name="__codelineno-65-3" href="#__codelineno-65-3"></a>openstack router set user1_router --external-gateway ext_net
+</span></code></pre></div>
+<h2 id="conexao">Conexão</h2>
+<p>Um par de chaves SSH precisa ser importado para a nuvem a fim de acessar suas instâncias.
+Gere um primeiro, caso ainda não tenha. Este comando cria um par de chaves sem senha (remova a opção -N para evitar isso):</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-66-1"><a id="__codelineno-66-1" name="__codelineno-66-1" href="#__codelineno-66-1"></a>mkdir ~/cloud-keys
+</span><span id="__span-66-2"><a id="__codelineno-66-2" name="__codelineno-66-2" href="#__codelineno-66-2"></a>
+</span><span id="__span-66-3"><a id="__codelineno-66-3" name="__codelineno-66-3" href="#__codelineno-66-3"></a>ssh-keygen -q -N &#39;&#39; -f ~/cloud-keys/user1-key
+</span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-67-1"><a id="__codelineno-67-1" name="__codelineno-67-1" href="#__codelineno-67-1"></a>openstack keypair create --public-key ~/cloud-keys/user1-key.pub user1
+</span></code></pre></div>
+<p>Grupos de segurança precisarão ser configurados para permitir o tráfego SSH. Você pode alterar as regras do grupo padrão ou criar um novo grupo com suas próprias regras. Faremos o último, criando um grupo chamado ‘Allow_SSH’:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-68-1"><a id="__codelineno-68-1" name="__codelineno-68-1" href="#__codelineno-68-1"></a>openstack security group create --description &#39;Allow SSH&#39; Allow_SSH
+</span><span id="__span-68-2"><a id="__codelineno-68-2" name="__codelineno-68-2" href="#__codelineno-68-2"></a>openstack security group rule create --proto tcp --dst-port 22 Allow_SSH
+</span></code></pre></div>
+<h2 id="instancia">Instância</h2>
+<p>Agora vamos criar uma instância com imagem jammy amd64 e com flavor m1.tiny de nome <em>client</em> e sem <em>Novo Volume</em>:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-69-1"><a id="__codelineno-69-1" name="__codelineno-69-1" href="#__codelineno-69-1"></a>openstack server create --image jammy-amd64 --flavor m1.tiny \
+</span><span id="__span-69-2"><a id="__codelineno-69-2" name="__codelineno-69-2" href="#__codelineno-69-2"></a>   --key-name user1 --network user1_net --security-group Allow_SSH \
+</span><span id="__span-69-3"><a id="__codelineno-69-3" name="__codelineno-69-3" href="#__codelineno-69-3"></a>   client
+</span></code></pre></div>
+<p>Solicite e atribua um endereço IP flutuante à nova instância:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-70-1"><a id="__codelineno-70-1" name="__codelineno-70-1" href="#__codelineno-70-1"></a>FLOATING_IP=$(openstack floating ip create -f value -c floating_ip_address ext_net)
+</span><span id="__span-70-2"><a id="__codelineno-70-2" name="__codelineno-70-2" href="#__codelineno-70-2"></a>openstack server add floating ip client $FLOATING_IP
+</span></code></pre></div>
+<p>Agora vamos conectar com a instância e testar se tudo funciona:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-71-1"><a id="__codelineno-71-1" name="__codelineno-71-1" href="#__codelineno-71-1"></a>ssh -i ~/cloud-keys/user1-key ubuntu@$FLOATING_IP
+</span></code></pre></div>
+<p>Se o terminal da instância for acessado com sucesso então a instância está corretamente configurada.</p>
+<p><strong>OVERVIEW</strong>
+<a class="glightbox" href="../img/overview2.jpeg" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="" src="../img/overview2.jpeg" /></a></p>
+<p><strong>INSTANCES</strong>
+<a class="glightbox" href="../img/instances2.jpeg" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="" src="../img/instances2.jpeg" /></a></p>
+<p><strong>TOPOLOGY</strong>
+<a class="glightbox" href="../img/topology2.jpeg" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="" src="../img/topology2.jpeg" /></a></p>
+<p><strong>MAAS</strong>
+<a class="glightbox" href="../img/maas2.jpeg" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="" src="../img/maas2.jpeg" /></a></p>
+<p>Agora é possível observar através do Horizon que após todos esses passos:</p>
+<ul>
+<li>Overview: Mostra pequenos gráficos em pizza com a quantidade de instâncias criadas, IP flutuante, grupo de segurança, redes etc.</li>
+<li>Instances: Mostra a nossa instância client criada.</li>
+<li>Topology: Mostra as nossas duas redes externa e interna</li>
+</ul>
+<h1 id="app">App</h1>
+<p>Agora vamos criar nossa infraestrutura, e para isso vamos cumprir umas tarefas:</p>
+<p>1) Criar 2 instâncias com API do projeto, etapa 1
+2) Criar 1 instância com banco de dados, etapa 1
+3) Criar 1 instância com LoadBalancer, nginx</p>
+<p>Iremos configurar seguindo a topologia:</p>
+<pre class="mermaid"><code>flowchart LR
+    subgraph private [192.169.0.0/24]
+        direction TB
+        lb e2@==&gt; api1[API]
+        lb e3@==&gt; api2[API]
+        api1 e4@==&gt; db
+        api2 e5@==&gt; db
+    end
+    user e1@==&gt;|request&lt;br&gt;172.16.0.0/20| lb
+    e1@{ animate: true }
+    e2@{ animate: true }
+    e3@{ animate: true }
+    e4@{ animate: true }
+    e5@{ animate: true }
+    lb@{ shape: div-rect, label: "Load Balancer" }
+    db@{ shape: cyl, label: "Database" }
+    user@{ img: "https://insper.github.io/computacao-nuvem/assets/images/fontawesome-user-icon.png", constraint: "on", h: 60, label: "User" }</code></pre>
+<p>Vamos subir todas as instâncias primeiro e em seguida configurar cada uma delas:</p>
+<p><a class="glightbox" href="../img/all.jpeg" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="" src="../img/all.jpeg" /></a></p>
+<h2 id="tarefa-1">Tarefa 1</h2>
+<p>Para criar as instâncias da API precisamos pegar a imagem que está no docker Hub com a API que criamos na etapa 1 do projeto.
+Mas antes precisamos instalar a engine do docker via terminal em TODAS instâncias exceto do nginx:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-72-1"><a id="__codelineno-72-1" name="__codelineno-72-1" href="#__codelineno-72-1"></a>sudo apt-get update
+</span><span id="__span-72-2"><a id="__codelineno-72-2" name="__codelineno-72-2" href="#__codelineno-72-2"></a>sudo apt-get install ca-certificates curl
+</span><span id="__span-72-3"><a id="__codelineno-72-3" name="__codelineno-72-3" href="#__codelineno-72-3"></a>sudo install -m 0755 -d /etc/apt/keyrings
+</span><span id="__span-72-4"><a id="__codelineno-72-4" name="__codelineno-72-4" href="#__codelineno-72-4"></a>sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+</span><span id="__span-72-5"><a id="__codelineno-72-5" name="__codelineno-72-5" href="#__codelineno-72-5"></a>sudo chmod a+r /etc/apt/keyrings/docker.asc
+</span><span id="__span-72-6"><a id="__codelineno-72-6" name="__codelineno-72-6" href="#__codelineno-72-6"></a>
+</span><span id="__span-72-7"><a id="__codelineno-72-7" name="__codelineno-72-7" href="#__codelineno-72-7"></a>echo \
+</span><span id="__span-72-8"><a id="__codelineno-72-8" name="__codelineno-72-8" href="#__codelineno-72-8"></a>  &quot;deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+</span><span id="__span-72-9"><a id="__codelineno-72-9" name="__codelineno-72-9" href="#__codelineno-72-9"></a>  $(. /etc/os-release &amp;&amp; echo &quot;${UBUNTU_CODENAME:-$VERSION_CODENAME}&quot;) stable&quot; | \
+</span><span id="__span-72-10"><a id="__codelineno-72-10" name="__codelineno-72-10" href="#__codelineno-72-10"></a>  sudo tee /etc/apt/sources.list.d/docker.list &gt; /dev/null
+</span><span id="__span-72-11"><a id="__codelineno-72-11" name="__codelineno-72-11" href="#__codelineno-72-11"></a>sudo apt-get update
+</span></code></pre></div>
+<p>Agora vamos baixar a imagem do docker hub:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-73-1"><a id="__codelineno-73-1" name="__codelineno-73-1" href="#__codelineno-73-1"></a>sudo docker run -d -p 8080:8080 --env-file .env seu_username/nome-da-imagem
+</span></code></pre></div>
+<blockquote>
+<p>Certifique de ter um arquivo .env com as credenciais do database que contenha o usuario, nome do database, link do host etc.</p>
+</blockquote>
+<p>Fazemos esses 2 passos para ambas as instâncias que irão conter a nossa API. Para verificar se está tudo ok com nossa API execute o comando:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-74-1"><a id="__codelineno-74-1" name="__codelineno-74-1" href="#__codelineno-74-1"></a>sudo docker ps -a
+</span></code></pre></div>
+<h2 id="tarefa-2">Tarefa 2</h2>
+<p>Para a tarefa 2 vamos instalar e utilizar o postgres:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-75-1"><a id="__codelineno-75-1" name="__codelineno-75-1" href="#__codelineno-75-1"></a>sudo apt update
+</span><span id="__span-75-2"><a id="__codelineno-75-2" name="__codelineno-75-2" href="#__codelineno-75-2"></a>sudo apt install postgresql postgresql-contrib -y
+</span></code></pre></div>
+<p>Em seguida vamos acessar o console do postgres:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-76-1"><a id="__codelineno-76-1" name="__codelineno-76-1" href="#__codelineno-76-1"></a>sudo -u postgres psql
+</span></code></pre></div>
+<p>Você pode definir uma senha nova:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-77-1"><a id="__codelineno-77-1" name="__codelineno-77-1" href="#__codelineno-77-1"></a>\password senha
+</span></code></pre></div>
+<blockquote>
+<p>Digite duas vezes</p>
+</blockquote>
+<p>Agora criamos o database com usuario garantindo privilégios:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-78-1"><a id="__codelineno-78-1" name="__codelineno-78-1" href="#__codelineno-78-1"></a>CREATE DATABASE database;
+</span><span id="__span-78-2"><a id="__codelineno-78-2" name="__codelineno-78-2" href="#__codelineno-78-2"></a>CREATE USER app_user WITH PASSWORD &#39;sua_senha&#39;;
+</span><span id="__span-78-3"><a id="__codelineno-78-3" name="__codelineno-78-3" href="#__codelineno-78-3"></a>GRANT ALL PRIVILEGES ON DATABASE database TO fastapi_app;
+</span><span id="__span-78-4"><a id="__codelineno-78-4" name="__codelineno-78-4" href="#__codelineno-78-4"></a>\q  # Para sair
+</span></code></pre></div>
+<p>Agora vamos editar o arquivo de configuração do postgres:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-79-1"><a id="__codelineno-79-1" name="__codelineno-79-1" href="#__codelineno-79-1"></a>sudo nano /etc/postgresql/*/main/postgresql.conf
+</span></code></pre></div>
+<p>Aqui localize e modifique a linha para:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-80-1"><a id="__codelineno-80-1" name="__codelineno-80-1" href="#__codelineno-80-1"></a>listen_addresses = &#39;*&#39; # para permitir todos
+</span></code></pre></div>
+<p>Depois vamos editar o arquivo de conexão:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-81-1"><a id="__codelineno-81-1" name="__codelineno-81-1" href="#__codelineno-81-1"></a>sudo nano /etc/postgresql/*/main/pg_hba.conf
+</span></code></pre></div>
+<p>Adicione no final:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-82-1"><a id="__codelineno-82-1" name="__codelineno-82-1" href="#__codelineno-82-1"></a>host all all 172.16.0.0/20 trust
+</span><span id="__span-82-2"><a id="__codelineno-82-2" name="__codelineno-82-2" href="#__codelineno-82-2"></a>host all all 192.169.0.82/32 md5
+</span><span id="__span-82-3"><a id="__codelineno-82-3" name="__codelineno-82-3" href="#__codelineno-82-3"></a>host all all 192.169.0.48/32 md5
+</span></code></pre></div>
+<p>E reinicie o postgres:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-83-1"><a id="__codelineno-83-1" name="__codelineno-83-1" href="#__codelineno-83-1"></a>sudo systemctl restart postgresql
+</span></code></pre></div>
+<p>Agora liberando o firewall:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-84-1"><a id="__codelineno-84-1" name="__codelineno-84-1" href="#__codelineno-84-1"></a>sudo ufw allow 5432/tcp
+</span><span id="__span-84-2"><a id="__codelineno-84-2" name="__codelineno-84-2" href="#__codelineno-84-2"></a>sudo ufw reload
+</span></code></pre></div>
+<p>E agora nosso database está pronto. Lembre-se das credenciais do database, como usuario, senha, link do host etc., que deverão ser colocados em um arquivo .env nas instâncias da API.</p>
+<h2 id="tarefa-3">Tarefa 3</h2>
+<p>Para configurar nosso loadbalencer vamos primeiro instalar:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-85-1"><a id="__codelineno-85-1" name="__codelineno-85-1" href="#__codelineno-85-1"></a>sudo apt-get install nginx
+</span></code></pre></div>
+<p>Agora vamos configuar o nginx. Para configurar um loadbalancer round robin, precisaremos usar o módulo upstream do nginx. Incorporaremos a configuração nas definições do nginx:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-86-1"><a id="__codelineno-86-1" name="__codelineno-86-1" href="#__codelineno-86-1"></a>sudo nano /etc/nginx/sites-available/default
+</span></code></pre></div>
+<p>Precisamos incluir o módulo upstream, que se parece com isto:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-87-1"><a id="__codelineno-87-1" name="__codelineno-87-1" href="#__codelineno-87-1"></a>upstream backend { server link_api_1; server link_api_2; }
+</span></code></pre></div>
+<p>Depois, devemos referenciar o módulo mais adiante na configuração:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-88-1"><a id="__codelineno-88-1" name="__codelineno-88-1" href="#__codelineno-88-1"></a>server { location / { proxy_pass http://backend; } }
+</span></code></pre></div>
+<p>Por fim reinicie o nginx:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-89-1"><a id="__codelineno-89-1" name="__codelineno-89-1" href="#__codelineno-89-1"></a>sudo service nginx restart
+</span></code></pre></div>
+<p>Com isso nosso nginx está pronto e irá distribuir entre as APIs.</p>
+<h2 id="testando">Testando</h2>
+<p>Para testar se nossas APIs funcionam corretamente nas instâncias criadas podemos utilizar um túnel com o IP externo do nginx que por sua vez irá redirecionar para uma das APIs:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-90-1"><a id="__codelineno-90-1" name="__codelineno-90-1" href="#__codelineno-90-1"></a>ssh cloud@IP_MAIN -L 8080:IP_DO_NGINX:PORTA_NGINX
+</span></code></pre></div>
+<blockquote>
+<p>A porta nginx é a porta definida dentro do arquivo de configuração no nginx</p>
+</blockquote>
+<p>Se o dashboard do docs da API aparecer significa que está tudo funcionando corretamente.</p>
+<p><a class="glightbox" href="../img/topo.jpeg" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="" src="../img/topo.jpeg" /></a></p>
+<p><a class="glightbox" href="../img/topo2.jpeg" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="" src="../img/topo2.jpeg" /></a></p>
+<p><a class="glightbox" href="../img/topo3.jpeg" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="" src="../img/topo3.jpeg" /></a></p>
+<p><a class="glightbox" href="../img/topo4.jpeg" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="" src="../img/topo4.jpeg" /></a></p>
+<p><a class="glightbox" href="../img/topo5.jpeg" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="" src="../img/topo5.jpeg" /></a></p>
+<p><a class="glightbox" href="../img/topo6.jpeg" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="" src="../img/topo6.jpeg" /></a></p>
+<p><a class="glightbox" href="../img/topo7.jpeg" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="" src="../img/topo7.jpeg" /></a></p>
+<p><a class="glightbox" href="../img/topo8.jpeg" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="" src="../img/topo8.jpeg" /></a></p>
 
 
 
