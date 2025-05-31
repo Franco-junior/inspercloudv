@@ -17,9 +17,9 @@ Vinícius Rodrigues
 
 - [x] Roteiro 1
 - [x] Roteiro 2
-- [ ] Roteiro 3
-- [ ] Roteiro 4
-- [ ] Projeto
+- [x] Roteiro 3
+- [x] Roteiro 4
+- [x] Projeto
 
 
 ## Referências
