@@ -729,3 +729,53 @@ Agora é possível observar através do Horizon que após todos esses passos:
 - Overview: Mostra pequenos gráficos em pizza com a quantidade de instâncias criadas, IP flutuante, grupo de segurança, redes etc.
 - Instances: Mostra a nossa instância client criada.
 - Topology: Mostra as nossas duas redes externa e interna
+
+# App
+
+Agora vamos criar nossa infraestrutura, e para isso vamos cumprir umas tarefas:
+
+1) Criar 2 instâncias com API do projeto, etapa 1
+2) Criar 1 instância com banco de dados, etapa 1
+3) Criar 1 instância com LoadBalancer, nginx
+
+Iremos configurar seguindo a topologia:
+
+``` mermaid
+flowchart LR
+    subgraph private [192.169.0.0/24]
+        direction TB
+        lb e2@==> api1[API]
+        lb e3@==> api2[API]
+        api1 e4@==> db
+        api2 e5@==> db
+    end
+    user e1@==>|request<br>172.16.0.0/20| lb
+    e1@{ animate: true }
+    e2@{ animate: true }
+    e3@{ animate: true }
+    e4@{ animate: true }
+    e5@{ animate: true }
+    lb@{ shape: div-rect, label: "Load Balancer" }
+    db@{ shape: cyl, label: "Database" }
+    user@{ img: "https://insper.github.io/computacao-nuvem/assets/images/fontawesome-user-icon.png", constraint: "on", h: 60, label: "User" }
+```
+
+## Tarefa 1
+
+Para criar as instâncias da API precisamos pegar a imagem que está no docker Hub com a API que criamos na etapa 1 do projeto.
+Mas antes precisamos instalar a engine do docker via terminal em TODAS instâncias exceto do nginx:
+
+```
+sudo apt-get update
+sudo apt-get install ca-certificates curl
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt-get update
+```
+
