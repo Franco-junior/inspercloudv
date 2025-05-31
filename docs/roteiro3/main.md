@@ -798,4 +798,73 @@ sudo docker ps -a
 
 ## Tarefa 2
 
-Para a tarefa 2 vamos utilizar o postgres 
+Para a tarefa 2 vamos instalar e utilizar o postgres:
+
+```
+sudo apt update
+sudo apt install postgresql postgresql-contrib -y
+```
+
+Em seguida vamos acessar o console do postgres:
+
+```
+sudo -u postgres psql
+```
+
+Você pode definir uma senha nova:
+
+```
+\password senha
+```
+> Digite duas vezes
+
+Agora criamos o database com usuario garantindo privilégios:
+
+```
+CREATE DATABASE database;
+CREATE USER app_user WITH PASSWORD 'sua_senha';
+GRANT ALL PRIVILEGES ON DATABASE database TO fastapi_app;
+\q  # Para sair
+```
+
+Agora vamos editar o arquivo de configuração do postgres:
+
+```
+sudo nano /etc/postgresql/*/main/postgresql.conf
+```
+
+Aqui localize e modifique a linha para:
+
+```
+listen_addresses = '*' # para permitir todos
+```
+
+Depois vamos editar o arquivo de conexão:
+
+```
+sudo nano /etc/postgresql/*/main/pg_hba.conf
+```
+
+Adicione no final:
+
+```
+host all all 172.16.0.0/20 trust
+host all all 192.169.0.82/32 md5
+host all all 192.169.0.48/32 md5
+```
+
+E reinicie o postgres:
+
+```
+sudo systemctl restart postgresql
+```
+
+Agora liberando o firewall:
+
+```
+sudo ufw allow 5432/tcp
+sudo ufw reload
+```
+
+E agora nosso database está pronto. Lembre-se das credenciais do database, como usuario, senha, link do host etc., que deverão ser colocados em um arquivo .env nas instâncias da API.
+
