@@ -912,3 +912,19 @@ ssh cloud@IP_MAIN -L 8080:IP_DO_NGINX:PORTA_NGINX
 > A porta nginx é a porta definida dentro do arquivo de configuração no nginx
 
 Se o dashboard do docs da API aparecer significa que está tudo funcionando corretamente.
+
+![](img/topo.jpeg)
+
+![](img/topo2.jpeg)
+
+![](img/topo3.jpeg)
+
+![](img/topo4.jpeg)
+
+![](img/topo5.jpeg)
+
+![](img/topo6.jpeg)
+
+![](img/topo7.jpeg)
+
+![](img/topo8.jpeg)
