@@ -711,3 +711,21 @@ ssh -i ~/cloud-keys/user1-key ubuntu@$FLOATING_IP
 ```
 
 Se o terminal da instância for acessado com sucesso então a instância está corretamente configurada.
+
+**OVERVIEW**
+![](img/overview2.jpeg)
+
+**INSTANCES**
+![](img/instances2.jpeg)
+
+**TOPOLOGY**
+![](img/topology2.jpeg)
+
+**MAAS**
+![](img/maas2.jpeg)
+
+Agora é possível observar através do Horizon que após todos esses passos:
+
+- Overview: Mostra pequenos gráficos em pizza com a quantidade de instâncias criadas, IP flutuante, grupo de segurança, redes etc.
+- Instances: Mostra a nossa instância client criada.
+- Topology: Mostra as nossas duas redes externa e interna
