@@ -617,6 +617,8 @@ Crie os flavors (instance type) - SEM ephemeral disk:
 | m1.medium   | 2     | 4        | 20   |
 | m1.large    | 4     | 8        | 20   |
 
+## Rede externa
+
 Crie uma rede externa pública (compartilhada), aqui chamada de ‘ext_net’. Usamos o tipo de provedor de rede ‘flat’ e seu provedor ‘physnet1’:
 
 ```
@@ -625,11 +627,57 @@ openstack network create --external --share \
    ext_net
 ```
 
-Crie a sub-rede, aqui chamada de ‘ext_subnet’, para a rede acima. Os valores utilizados são baseados no ambiente local. Por exemplo, lembre-se de que nossa sub-rede MAAS é ‘10.246.112.0/21’:
+Crie a sub-rede, aqui chamada de ‘ext_subnet’, para a rede acima. Os valores utilizados são baseados no ambiente local. Usar uma faixa de alocação entre 172.16.7.0 e 172.16.8.255:
 
 ```
 openstack subnet create --network ext_net --no-dhcp \
-   --gateway 10.246.112.1 --subnet-range 10.246.112.0/21 \
-   --allocation-pool start=10.246.116.23,end=10.246.116.87 \
+   --gateway 172.16.0.1 --subnet-range 172.16.0.0/20 \
+   --allocation-pool start=172.16.7.0,end=172.16.8.255 \
    ext_subnet
 ```
+
+## Rede interna e roteador
+
+Para obter um endereço IP fixo para acessar quaisquer instâncias criadas, precisamos de uma rede específica do projeto com uma sub-rede privada. Também precisaremos de um roteador para conectar essa rede à rede pública criada anteriormente.
+
+O usuário não-administrador agora cria uma rede interna privada chamada ‘user1_net’ e uma sub-rede correspondente chamada ‘user1_subnet’. Usar a subnet 192.169.0.0/24. Não use DNS:
+
+```
+openstack network create --internal user1_net
+
+openstack subnet create --network user1_net \
+   --subnet-range 192.169.0.0/24 \
+   --allocation-pool start=192.169.0.10,end=192.169.0.99 \
+   user1_subnet
+```
+
+Agora, um roteador chamado ‘user1_router’ é criado, adicionado à sub-rede e configurado para usar a rede externa pública como sua rede de gateway:
+
+```
+openstack router create user1_router
+openstack router add subnet user1_router user1_subnet
+openstack router set user1_router --external-gateway ext_net
+```
+
+## Conexão
+
+Um par de chaves SSH precisa ser importado para a nuvem a fim de acessar suas instâncias.
+Gere um primeiro, caso ainda não tenha. Este comando cria um par de chaves sem senha (remova a opção -N para evitar isso):
+
+```
+mkdir ~/cloud-keys
+
+ssh-keygen -q -N '' -f ~/cloud-keys/user1-key
+```
+
+```
+openstack keypair create --public-key ~/cloud-keys/user1-key.pub user1
+```
+
+Grupos de segurança precisarão ser configurados para permitir o tráfego SSH. Você pode alterar as regras do grupo padrão ou criar um novo grupo com suas próprias regras. Faremos o último, criando um grupo chamado ‘Allow_SSH’:
+
+```
+openstack security group create --description 'Allow SSH' Allow_SSH
+openstack security group rule create --proto tcp --dst-port 22 Allow_SSH
+```
+
