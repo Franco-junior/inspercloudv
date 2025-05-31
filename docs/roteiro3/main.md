@@ -868,3 +868,36 @@ sudo ufw reload
 
 E agora nosso database está pronto. Lembre-se das credenciais do database, como usuario, senha, link do host etc., que deverão ser colocados em um arquivo .env nas instâncias da API.
 
+## Tarefa 3
+
+Para configurar nosso loadbalencer vamos primeiro instalar:
+
+```
+sudo apt-get install nginx
+```
+
+Agora vamos configuar o nginx. Para configurar um loadbalancer round robin, precisaremos usar o módulo upstream do nginx. Incorporaremos a configuração nas definições do nginx:
+
+```
+sudo nano /etc/nginx/sites-available/default
+```
+
+Precisamos incluir o módulo upstream, que se parece com isto:
+
+```
+upstream backend { server link_api_1; server link_api_2; }
+```
+
+Depois, devemos referenciar o módulo mais adiante na configuração:
+
+```
+server { location / { proxy_pass http://backend; } }
+```
+
+Por fim reinicie o nginx:
+
+```
+sudo service nginx restart
+```
+
+Com isso nosso nginx está pronto e irá distribuir entre as APIs.
