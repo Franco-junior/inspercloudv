@@ -1,4 +1,4 @@
-# Insper Cloud - Projeto Semestral
+# Insper Cloud - Projeto Semestral ETAPA 1
 
 Este projeto consiste em uma API RESTful desenvolvida com FastAPI, capaz de cadastrar e autenticar usuários, além de permitir a consulta de dados de terceiros (cotações do Índice Bovespa).
 
@@ -13,7 +13,7 @@ O projeto segue uma arquitetura em camadas, utilizando:
 
 ## Vídeo de explicação do funcionamento da Aplicação localmente
 
-https://youtu.be/UWX2HL2aMkw
+[https://youtu.be/UWX2HL2aMkw](https://youtu.be/UWX2HL2aMkw)
 
 ## Docker Hub
 
