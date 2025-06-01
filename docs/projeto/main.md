@@ -241,6 +241,10 @@ volumes:
 
 Agora vamos detalhar o processo de deploy de uma aplicação (API) e seu banco de dados no Amazon LightSail, um serviço da AWS que oferece uma interface mais simplificada e intuitiva para gerenciar recursos de nuvem, ideal para pequenos e médios projetos. O foco principal é na utilização de dois serviços específicos: **Databases** para o PostgreSQL e **Containers** para a API FastAPI.
 
+## **Vídeo da API funcionando no LightSail**
+
+[https://youtu.be/MnFQXdPm7ME](https://youtu.be/MnFQXdPm7ME)
+
 ## 1. Configuração do Banco de Dados (PostgreSQL)
 
 O primeiro passo é configurar e deployar o banco de dados.
@@ -254,7 +258,7 @@ O primeiro passo é configurar e deployar o banco de dados.
 5.  **Escolha do Banco de Dados:** Selecione `PostgreSQL` e a versão `17.5`.
 6.  **Credenciais de Login (Opcional, mas recomendado):**
     *   Marque `Specify login credentials`.
-    *   **User name:** Mantenha o que for mais relevante para o seu caso (para replicar o vídeo, use `cloudv`).
+    *   **User name:** Mantenha o que for mais relevante para o seu caso.
     *   **Password:** É possível gerar uma senha forte automaticamente (`Create a strong password for me`) ou definir uma senha personalizada.
 7.  **Nome do Banco de Dados Mestre:**
     *   Marque `Specify the master database name`.
@@ -281,6 +285,10 @@ Após a criação, ao clicar no banco de dados, você encontrará os detalhes de
 *   **Password:** (A senha definida durante a criação).
 *   **Modo Público:** É crucial que o **Public mode esteja habilitado**. Isso permite que sua aplicação (que estará em um contêiner separado) se conecte ao banco de dados, mesmo que não estejam na mesma zona de disponibilidade privada. Sem isso, a API não conseguiria se comunicar com o banco de dados.
 
+### Database funcionando no LightSail
+
+![](img/database.png)
+
 ## 2. Configuração do Serviço de Contêineres (FastAPI API)
 
 Agora, configuraremos o serviço para hospedar a API FastAPI.
@@ -298,7 +306,7 @@ Agora, configuraremos o serviço para hospedar a API FastAPI.
     *   **Observação:** Este plano também oferece os primeiros 90 dias gratuitos.
 5.  **Escala (Scale):**
     *   Define o número de nós (instâncias do contêiner) que sua aplicação terá.
-    *   O vídeo mantém `1` nó.
+    *   No nosso projeto mantemos `1` nó.
 6.  **Configuração do Primeiro Deploy (`Set up your first deployment`):**
     *   **Container name:** Um nome para o seu contêiner (ex: `cloudv`).
     *   **Image:** Você precisa fornecer a URL da imagem Docker da sua aplicação, geralmente hospedada no Docker Hub.
@@ -319,9 +327,13 @@ Agora, configuraremos o serviço para hospedar a API FastAPI.
         *   Porta: `8080`.
         *   Health check path: `/` (para verificar se a API está online).
 
-7.  **Identificar seu Serviço:** Dê um nome único para o seu serviço de contêiner. No vídeo, o nome já existente é `fastapi-service`.      
+7.  **Identificar seu Serviço:** Dê um nome único para o seu serviço de contêiner. No nosso projeto, o nome já existente é `fastapi-service`.      
 
 8.  **Criar Serviço de Contêineres:** Clique em `Create container service`. O deploy pode levar alguns minutos.
+
+### FastAPI funcionando no LightSail
+
+![](img/fasapi.png)
 
 ## 3. Testando a Aplicação Deployada
 
@@ -337,6 +349,11 @@ Após o deploy, o status do serviço de contêineres deve mudar para "Running".
     *   **`/registrar` (POST):** Para registrar um novo usuário (email, nome, senha). A execução bem-sucedida retorna um token JWT.        
     *   **`/login` (POST):** Para fazer login com um usuário existente (email, senha). Também retorna um token JWT.
     *   **`/consultar` (GET):** Para consultar dados do Bovespa. Requer que o usuário esteja autenticado (JWT). Você precisa colar o JWT obtido no login no campo "Authorize" da interface do Swagger UI para que esta requisição funcione.
+
+
+### API funcionando com endpoints
+
+![](img/image.png)
 
 ## 4. Arquitetura do Projeto (Diagrama Mermaid)
 
@@ -390,16 +407,20 @@ graph TD
 *   **`fastapi-db` PostgreSQL Database:** O banco de dados PostgreSQL gerenciado pelo LightSail, onde os dados da aplicação são armazenados.
 *   **DockerHub:** Repositório público de imagens Docker, de onde o LightSail baixa a imagem da sua API para deploy.
 
-## 5. Estimativa de Custo Mensal da Infraestrutura
+## 5. Custos até agora do LightSail (01/06/2025)
 
-Com base nos planos selecionados no vídeo (após o período de teste gratuito de 90 dias):
+![](img/image2.png)
+
+## 6. Estimativa de Custo Mensal da Infraestrutura
+
+Com base nos planos selecionados no nosso projeto:
 
 *   **Banco de Dados (PostgreSQL `fastapi-db`):** $15 USD/mês (plano de 1GB RAM, 2 vCPUs).
 *   **Serviço de Contêineres (Micro - `fastapi-service`):** $10 USD/mês por nó (1GB RAM, 0.25 vCPUs).
 
 **Custos Projetados:**
 
-*   **Para 1 instância de contêiner (conforme o vídeo):**
+*   **Para 1 instância de contêiner:**
     *   Custo DB: $15 USD
     *   Custo Contêiner: $10 USD (1 nó * $10/nó)
     *   **Total: $25 USD/mês** (≤ USD 50)
@@ -412,9 +433,7 @@ Com base nos planos selecionados no vídeo (após o período de teste gratuito d
     *   Custo Contêiner: $100 USD (10 nós * $10/nó)
     *   **Total: $115 USD/mês** (Excede USD 50)
 
-Portanto, apenas a configuração com 1 instância de contêiner se encaixa no limite de $50 USD/mês.
-
-## 6. Detalhes da Integração App ↔ Banco de Dados
+## 7. Detalhes da Integração App ↔ Banco de Dados
 
 A integração entre a aplicação FastAPI (executando em um contêiner no LightSail) e o banco de dados PostgreSQL (também no LightSail) é crucial para o funcionamento do sistema. Essa comunicação é estabelecida principalmente através de **variáveis de ambiente** e da configuração 
 de **rede**.
@@ -422,7 +441,7 @@ de **rede**.
 *   **Host do Banco de Dados (`POSTGRES_HOST`):** Em vez de usar `localhost` ou um IP privado, a API se conecta ao banco de dados utilizando o `Endpoint` público fornecido pelo LightSail. Este endpoint é um nome de domínio completamente qualificado (FQDN) que resolve para o endereço IP do banco de dados na rede da AWS. Essa abordagem é necessária porque o serviço de contêineres e a instância do banco de dados podem estar em diferentes recursos lógicos ou mesmo em diferentes zonas de disponibilidade.
 *   **Porta do Banco de Dados (`5432`):** A comunicação com o PostgreSQL ocorre na porta padrão `5432`. Esta porta deve ser acessível publicamente no banco de dados para que a API possa se conectar a ele.
 *   **Segurança e Acesso Público:**
-    *   O vídeo destaca a importância de habilitar o **"Public mode"** para o banco de dados. Isso significa que o banco de dados aceitará 
+    *   É importante destacar a necessidade de habilitar o **"Public mode"** para o banco de dados. Isso significa que o banco de dados aceitará 
 conexões de qualquer lugar na internet (não apenas de outros recursos dentro da sua rede privada na AWS).
     *   Embora a habilitação do "Public mode" possa parecer um risco de segurança, no contexto do LightSail, para uma aplicação que precisa acessar o banco de dados a partir de um serviço de contêiner que pode ter um endpoint público, isso é muitas vezes uma configuração necessária.
     *   A segurança é mantida através das credenciais de login (usuário e senha) que são passadas para o banco de dados. A API deve sempre 
