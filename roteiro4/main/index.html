@@ -131,6 +131,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#objetivos" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -466,6 +471,8 @@
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
       
       
+        
+      
       
       <a href="./" class="md-nav__link md-nav__link--active">
         
@@ -530,6 +537,8 @@
   
   
   
+    
+  
   
 </nav>
                   </div>
@@ -548,9 +557,178 @@
   
 
 
-  <h1>Roteiro 4</h1>
-
-
+<h1 id="objetivos">Objetivos</h1>
+<ol>
+<li>Entender os conceitos básicos Infraestrutura como código.</li>
+<li>Entender os conceitos básicos sobre SLA e DR.</li>
+</ol>
+<h1 id="infra">Infra</h1>
+<p>A infraestrutura necessária para cumprir com os objetivos desse roteiro consiste em segmentar por aluno - de forma a criar uma separação lógica entre os recursos utilizados por estes - e estruturar uma hierarquia de projeto para cada através do dashboard do OpenStack.
+Para isso, seguimos o seguinte passo-a-passo:</p>
+<h2 id="1-criacao-de-um-domain-unico">1. Criação de um Domain único</h2>
+<p>No dashboard do OpenStack, nevagamos até Identity &gt; Domains, clicamos em "Create Domain" e adicionamos o domínio AlunosDomain. Em seguida, definimos AlunosDomain como o novo contexto de uso.</p>
+<h2 id="2-criacao-de-um-projeto-para-cada-aluno">2. Criação de um projeto para cada aluno</h2>
+<p>Em Identity &gt; Projects, criamos os projetos <code>KitV_Vinicius</code> e <code>KitV_AndersonFranco</code>. Em seguida, em Identity &gt; Users, criamos os usuários Vinicius, com papel administrativo no projeto KitV_Vinicius, e AndersonFranco, com papel administrativo no projeto KitV_AndersonFranco.</p>
+<h1 id="setup">Setup</h1>
+<h2 id="criando-a-infraestrutura-utilizando-iac">Criando a Infraestrutura utilizando IaC</h2>
+<p>Para criar a infraestrutura usando IaC, utilizamos o Terraform. O Terraform conta com arquivos .tf, que definem a infraestrutura.</p>
+<p>O Terraform sabe o que é implantado por meio do arquivo de estado. Este estado é armazenado por padrão em um arquivo local chamado “terraform.tfstate”. Também pode ser armazenado remotamente, o que funciona melhor em um ambiente de equipe.</p>
+<p>O Terraform permite vários provedores, normalmente inicializados em um arquivo chamado provider.tf.</p>
+<p>Em cada projeto criado anteriormente (KitV_Vinicius e KitV_AndersonFranco), criamos a pasta terraform, com a seguinte estrutura de arquivos:</p>
+<p><a class="glightbox" href="../img/terraform_tree.png" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="" src="../img/terraform_tree.png" /></a></p>
+<p><em>Fonte: <a href="https://insper.github.io/computacao-nuvem/roteiros/4.app/#criando-a-infraestrutura-utilizando-iac">Roteiro 4 - Cloud</a></em></p>
+<p>Cada um desses arquivos foi preenchido com os templates a seguir e posteriormente modificados com as informações: username, key pair e external network id.</p>
+<p>Templates:</p>
+<p><code>provider.tf</code></p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a># Terraform Openstack deployment
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a># Author: Tiago Demay - tiagoaodc@insper.edu.br
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a># Define required providers
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>terraform {
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>required_version = &quot;&gt;= 0.14.0&quot;
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>  required_providers {
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    openstack = {
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>      source  = &quot;terraform-provider-openstack/openstack&quot;
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>      version = &quot;~&gt; 1.35.0&quot;
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    }
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>  }
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>}
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>
+</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>
+</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a># Configure the OpenStack Provider
+</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>
+</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>provider &quot;openstack&quot; {
+</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>  region              = &quot;RegionOne&quot;
+</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>  user_name           = &quot;SEU_USUARIO&quot;
+</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>}
+</span></code></pre></div>
+<p><code>instance1.tf</code></p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>resource &quot;openstack_compute_instance_v2&quot; &quot;instancia&quot; {
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  name            = &quot;basic&quot;
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>  image_name      = &quot;bionic-amd64&quot;
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  flavor_name     = &quot;m1.small&quot;
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>  key_pair        = &quot;mykey&quot;
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>  security_groups = [&quot;default&quot;]
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>  network {
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>    name = &quot;network_1&quot;
+</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>  }
+</span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>
+</span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>  depends_on = [openstack_networking_network_v2.network_1]
+</span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>
+</span><span id="__span-1-14"><a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>}
+</span></code></pre></div>
+<p><code>instance2.tf</code></p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>resource &quot;openstack_compute_instance_v2&quot; &quot;instancia&quot; {
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>  name            = &quot;basic2&quot;
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>  image_name      = &quot;jammy-amd64&quot;
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>  flavor_name     = &quot;m1.tiny&quot;
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>  key_pair        = &quot;mykey&quot;
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>  security_groups = [&quot;default&quot;]
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>
+</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>  network {
+</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>    name = &quot;network_1&quot;
+</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>  }
+</span><span id="__span-2-11"><a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>
+</span><span id="__span-2-12"><a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>  depends_on = [openstack_networking_network_v2.network_1]
+</span><span id="__span-2-13"><a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>
+</span><span id="__span-2-14"><a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>}
+</span></code></pre></div>
+<p><code>network.tf</code></p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>resource &quot;openstack_networking_network_v2&quot; &quot;network_1&quot; {
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>  name           = &quot;network_1&quot;
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>  admin_state_up = &quot;true&quot;
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>}
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>resource &quot;openstack_networking_subnet_v2&quot; &quot;subnet_1&quot; {
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>  network_id = &quot;${openstack_networking_network_v2.network_1.id}&quot;
+</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>  cidr       = &quot;192.167.199.0/24&quot;
+</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>}
+</span></code></pre></div>
+<p><code>router.tf</code></p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>resource &quot;openstack_networking_router_v2&quot; &quot;router_1&quot; {
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>  name                = &quot;my_router&quot;
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>  admin_state_up      = true
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>  external_network_id = &lt;&quot;ID_EXT_NETWORK&quot;&gt;
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>}
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>resource &quot;openstack_networking_router_interface_v2&quot; &quot;int_1&quot; {
+</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>  router_id = &quot;${openstack_networking_router_v2.router_1.id}&quot;
+</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>  subnet_id = &quot;${openstack_networking_subnet_v2.subnet_1.id}&quot;
+</span><span id="__span-4-10"><a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>}
+</span></code></pre></div>
+<h3 id="credenciais-do-usuario">Credenciais do usuário</h3>
+<p>Para poder carregar as variáveis do ambiente de cada usuário, seguimos o seguinte procedimento:</p>
+<ol>
+<li>Entramos no dashboard do OpenStack com o usuário de cada aluno, no domínio AlunosDomain;</li>
+<li>Na aba project → API access, fizemos o download do openstack rc file de cada usuário;</li>
+<li>Copiamos o conteudo em cada pasta de projeto, num arquivo openrc.sh;</li>
+<li>Cedemos a permissão de execução para o arquivo <code>chmod +x arquivo.sh</code></li>
+<li>Carregamos as variáveis de ambiente do administrador executando o comando <code>source openstack-base/openrc</code> na raiz do projeto;</li>
+<li>Carregamos as variáveis de ambiente do nosso projeto executando o comando <code>source openrc.sh</code> dentro da pasta do projeto.</li>
+</ol>
+<h3 id="implementacao-da-infraestrutura">Implementação da infraestrutura</h3>
+<p>Para implementar a infraestrutura, enfim, rodamos os comandos:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>terraform plan
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>terraform apply
+</span></code></pre></div>
+<p>E através do OpenStack, verificamos a criação das redes.</p>
+<h3 id="checkpoint-geral">Checkpoint - Geral</h3>
+<p><strong>Aba Identy &gt; projects no OpenStack.</strong></p>
+<p><a class="glightbox" href="../img/admin_projetos.jpg" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="" src="../img/admin_projetos.jpg" /></a></p>
+<p><strong>Aba Identy &gt; users no OpenStack.</strong></p>
+<p><a class="glightbox" href="../img/admin_usuarios.jpg" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="" src="../img/admin_usuarios.jpg" /></a></p>
+<h3 id="checkpoint-vinicius">Checkpoint - Vinícius</h3>
+<p><strong>Aba Compute &gt; Overview no OpenStack.</strong></p>
+<p><a class="glightbox" href="../img/overview_vinicius.jpg" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="" src="../img/overview_vinicius.jpg" /></a></p>
+<p><strong>Aba compute &gt; instances no OpenStack.</strong></p>
+<p><a class="glightbox" href="../img/instances_vinicius.jpg" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="" src="../img/instances_vinicius.jpg" /></a></p>
+<p><strong>Aba network &gt; topology no OpenStack.</strong></p>
+<p><a class="glightbox" href="../img/network_topology_vinicius.jpg" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="" src="../img/network_topology_vinicius.jpg" /></a></p>
+<h3 id="checkpoint-anderson-franco">Checkpoint - Anderson Franco</h3>
+<p><strong>Aba Compute &gt; Overview no OpenStack.</strong></p>
+<p><a class="glightbox" href="../img/overview_franco.jpg" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="" src="../img/overview_franco.jpg" /></a></p>
+<p><strong>Aba compute &gt; instances no OpenStack.</strong></p>
+<p><a class="glightbox" href="../img/instances_franco.jpg" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="" src="../img/instances_franco.jpg" /></a></p>
+<p><strong>Aba network &gt; topology no OpenStack.</strong></p>
+<p><a class="glightbox" href="../img/network_topology_franco.jpg" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="" src="../img/network_topology_franco.jpg" /></a></p>
+<h2 id="criando-um-plano-de-disaster-recovery-e-sla">Criando um plano de Disaster Recovery e SLA</h2>
+<p><strong>a. Escolha da Infraestrutura</strong></p>
+<p>Para este cenário, a <strong>Nuvem Privada</strong> é a escolha mais prudente. A natureza sigilosa dos dados operacionais é o fator primordial, e uma nuvem privada oferece o controle granular sobre segurança, governança e soberania de dados indispensável. Embora possa haver um investimento inicial, o controle sobre a infraestrutura e a previsibilidade de custos a longo prazo para uma carga de trabalho crítica e estável podem resultar em um TCO (Custo Total de Propriedade) vantajoso. Este ambiente dedicado mitiga riscos associados ao compartilhamento de recursos de nuvens públicas, essencial para dados sensíveis.</p>
+<p><strong>b. A Necessidade Estratégica de um Time de DevOps</strong></p>
+<p>A constituição de um time de <strong>DevOps</strong> é fundamental para o sucesso deste projeto. DevOps, como cultura e conjunto de práticas, une Desenvolvimento (Dev) e Operações (Ops), promovendo agilidade e velocidade na entrega de novas funcionalidades e correções através da automação (CI/CD). Isso se traduz em maior qualidade e confiabilidade do sistema, com testes integrados e monitoramento contínuo. A colaboração e comunicação otimizadas entre equipes resultam em resolução de problemas mais eficiente e redução de custos operacionais. Crucialmente, a abordagem DevSecOps integra a segurança em todo o ciclo de vida do sistema, vital para a proteção dos nossos dados sigilosos.</p>
+<p><strong>c. Plano de Resiliência: Disaster Recovery (DR) e Alta Disponibilidade (HA)</strong></p>
+<ul>
+<li>
+<p><strong>Principais Ameaças Mapeadas:</strong> Consideramos desastres naturais, falhas de energia prolongadas, falhas de hardware e software, erros humanos, ataques cibernéticos (ransomware, DDoS) e falhas de comunicação.</p>
+</li>
+<li>
+<p><strong>Ações Priorizadas para Recuperação (DR):</strong> Em caso de desastre, o plano prevê:</p>
+<ol>
+<li>Ativação imediata da equipe de resposta e comunicação às partes interessadas.</li>
+<li>Avaliação rápida do impacto.</li>
+<li>Acionamento do site de DR (geograficamente distinto), com RPO (Recovery Point Objective) de minutos e RTO (Recovery Time Objective) de horas.</li>
+<li>Restauração e validação dos dados a partir dos backups mais recentes.</li>
+<li>Validação dos sistemas e redirecionamento dos usuários.</li>
+<li>Monitoramento contínuo e, posteriormente, planejamento do retorno ao site primário (failback).</li>
+<li>Análise pós-incidente para melhoria contínua.</li>
+</ol>
+</li>
+<li>
+<p><strong>Política de Backup:</strong> Implementaremos backups completos semanais, incrementais/diferenciais diários e de logs de transação frequentes. A retenção variará de semanas a anos, conforme a criticidade e conformidade. Cópias serão armazenadas off-site (no site de DR), com criptografia e testes de restauração trimestrais para garantir a integridade.</p>
+</li>
+<li>
+<p><strong>Implementação de Alta Disponibilidade (HA):</strong> A HA será alcançada através de:</p>
+<ul>
+<li>Redundância em todas as camadas: servidores em cluster, storage com RAID e controladoras duplas, equipamentos de rede redundantes e fontes de energia duplicadas (UPS e geradores).</li>
+<li>Balanceamento de carga para distribuir o tráfego e evitar pontos únicos de falha.</li>
+<li>Virtualização para permitir migração rápida de VMs.</li>
+<li>Clusters de banco de dados com replicação e failover automático.</li>
+<li>Monitoramento proativo para detecção antecipada de problemas.</li>
+</ul>
+</li>
+</ul>
 
 
 
