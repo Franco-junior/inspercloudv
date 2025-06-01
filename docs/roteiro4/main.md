@@ -203,8 +203,6 @@ A constituição de um time de **DevOps** é fundamental para o sucesso deste pr
 
 **c. Plano de Resiliência: Disaster Recovery (DR) e Alta Disponibilidade (HA)**
 
-Para um sistema crítico, um plano robusto de DR e HA é imperativo.
-
 * **Principais Ameaças Mapeadas:** Consideramos desastres naturais, falhas de energia prolongadas, falhas de hardware e software, erros humanos, ataques cibernéticos (ransomware, DDoS) e falhas de comunicação.
 
 * **Ações Priorizadas para Recuperação (DR):** Em caso de desastre, o plano prevê:
@@ -224,5 +222,3 @@ Para um sistema crítico, um plano robusto de DR e HA é imperativo.
     * Virtualização para permitir migração rápida de VMs.
     * Clusters de banco de dados com replicação e failover automático.
     * Monitoramento proativo para detecção antecipada de problemas.
-
-Esta estratégia integrada visa assegurar que o novo sistema operacional seja seguro, resiliente e eficiente, suportando as operações críticas da empresa em todo o Brasil.
